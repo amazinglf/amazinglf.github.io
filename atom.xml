@@ -4,7 +4,7 @@
   <title><![CDATA[My Octopress Blog]]></title>
   <link href="http://amazinglf.github.io/atom.xml" rel="self"/>
   <link href="http://amazinglf.github.io/"/>
-  <updated>2016-02-20T23:49:25+08:00</updated>
+  <updated>2016-02-20T23:53:05+08:00</updated>
   <id>http://amazinglf.github.io/</id>
   <author>
     <name><![CDATA[Your Name]]></name>
@@ -14,11 +14,17 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Swift Xue Xi Zong Jie]]></title>
+    <title type="html"><![CDATA[Swift 学习总结]]></title>
     <link href="http://amazinglf.github.io/blog/2016/01/01/swift-xue-xi-zong-jie/"/>
-    <updated>2016-01-01T00:00:00+08:00</updated>
+    <updated>2016-01-01T14:33:03+08:00</updated>
     <id>http://amazinglf.github.io/blog/2016/01/01/swift-xue-xi-zong-jie</id>
-    <content type="html"><![CDATA[
+    <content type="html"><![CDATA[<p>Swift学习之基础部分
+常量和变量,主要掌握根据它们使用的场景，对不会变化的值使用常量，对不断变化的值使用变量。
+注释：单行注释使用//，多行注释使用/<em>  </em>/，对于多行注释还可以使用嵌套。
+分号：Swift中可以省略分号，如果在同一行有多条语句，需要用分号隔开。
+整数：Int UInt 可以通过它的最大值、最小值属性获取它表示的范围。
+浮点数：带有小数点的数据类型，Float Double。
+类型安全和类型推断：Swift会在编译的时候对代码进行类型检查，把不匹配的类型标记为错误。如果给变量或常量赋了初始值的时候，可以不申明类型，由系统进行类型推断。</p>
 ]]></content>
   </entry>
   
