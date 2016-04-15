@@ -1,0 +1,412 @@
+---
+layout: post
+title: "swift 学习总结"
+date: 2016-01-01 14:33:03 +0800
+comments: true
+categories: 
+
+---
+
+Swift学习之基础部分
+常量和变量,主要掌握根据它们使用的场景，对不会变化的值使用常量，对不断变化的值使用变量。
+
+注释：单行注释使用//，多行注释使用/*  */，对于多行注释还可以使用嵌套。
+
+分号：Swift中可以省略分号，如果在同一行有多条语句，需要用分号隔开。
+
+整数：Int UInt 可以通过它的最大值、最小值属性获取它表示的范围。
+
+浮点数：带有小数点的数据类型，Float Double。
+
+类型安全和类型推断：Swift会在编译的时候对代码进行类型检查，把不匹配的类型标记为错误。如果给变量或常量赋了初始值的时候，可以不申明类型，由系统进行类型推断。
+
+
+1、基础数据类型（本质都是通过结构体或枚举类型定义的）
+  常量定义 let  i ＝ 10，常量一般必须要赋一个初值
+  变量定义 var j : Int ，变量如果指定类型可以不赋初值,如果没有指定类型必须赋初始值
+  它们的共同特点就是可以不指定值的类型。如果没有指定类型编译器会根据你赋的值进行类型推断。
+  总结：Swift支持隐式类型推断，不支持隐式类型转换（把某种类型的值赋值给另一种类型的值）。
+  
+  
+2、swift新增的数据类型
+  元组（tuples)
+  可选值
+  隐式解析可选 
+  
+  
+3、字符串数据类型
+  首先理解字符串存储由来，我们都知道计算机只能识别0101的数字，那一些非数值类型的字符是如何存储的呢，首先需要制定一些统一的标准，将符号转化为数字，由此出现针对英文字符的ASCII编码，但是全世界除了英文，还要中文，俄文等等其他语言，ASCII编码已经不能满足我们的需求，因此出现一个支持全世界各种语言的国际标准Unicode标准，而swift就是支持Unicode标准的一门语言，并且它的变量名也是支持中文的。
+  
+  
+4、运算符
+   与其他语言的区别，一个赋值运算符整体构成的表达式不代表一个值，不能进行连续赋值a＝b＝1，并且赋值运算符也不能出现在if判断语句中了，如果出现就会报错，这样也能避免我们把==写成＝，而不报错的情况出现。
+   还有另外一个区别，swift新增了一种区间运算符，定义如下：0...5 表示0，1，2，3，4，5。0...<5 表示0，1，2，3，4。有一个需要注意左右区间不能用小数，否则会出现一直循环。
+   
+   
+   
+5、集合数据类型
+  数组：相同类型的数据在数组中连续排列，因为是有序，元素检索速度非常快（c语言数组定义）。Swift数组的定义与此类似，还是有很多差别。定义如下：var array1 : Array<Int> = ［1,2,3,4］,因为数组中元素类型定义为范型，我们可以定义为任意一种类型。 并且Swift的数组中可以放置任意类型的数据。通过设置它的类型为Any，如下：var array1 : Array<Any> = ［“hello”,2,3,4］，至于它为什么能存储不同数据类型，可以从数组的结构体定义以及存储上去找原因。并且Swift允许在结构体中声明方法，更符合面向对象思想。
+  数组操作：读数据，通过数组下标的方式，同样也要注意数组越界的问题。修改数据，前提数组是变量，可以通过append、insert等向数组中添加一个元素，或者以直接赋值的方式修改数组中某个元素，以及通过removeLast、removeAtIndex删除数组中的某个元素。
+  slice：一种与数组非常相似的集合类型，定义也差不多一样，和数组可以进行相互转换，如：Slice sli = array1[0...5] 通过区间运算符或者使用Slice的结构体方法定义 Slice sli = Slice(array1)，不能直接赋值
+ range：用来存放区间表达式的值，它的本质是结构体，它也支持泛型（即任意类型，但也必须遵守forwardindex协议），var range : Range<int> = 0...3 或者通过构造方法定义 var range2 : Range<int> = Range(start:0, end:3)，需要注意的是这里表示0，1，2，不包括3。而前面的定义包括3.
+ 数组批量操作，前面讲的slice、range都是为数组的批量操作做准备的。
+ 
+  (1) 可以将range指定范围内的数替换成任意其他个范围内的数，var array1 = ［1,2,3,4］array1[0...1] = ［8,7,8,9]。最后得到的array1为:［8,7,8,9,3,4]。或者使用函数array1.replaceRange(Range(start:0, end:2), With:[8,7,8,9]).，实现和前面一样的结构
+  (2) 数组还可以通过复合的赋值运算符往数组中添加元素、数组、slice等，array1+=9 等价于 array1.append(9)，array1+＝[1,2,3]，array1+=slice，array1+=array2[0...5]
+  数组遍历，第一种for in 快速枚举，第二种通过元组进行遍历
+for elem in array1{
+  println(elem)
+}
+ for  (index, value) in enumerate(array1){
+  println("index:\(index) = \(value)");    //其中\(index)类似于对字符串中格式化占位符的处理
+}
+
+
+
+6、字典数据类型
+基本概念，存放无序的数据，因此它的遍历需通过检索数据关键字实现，它类似于数据结构中hash函数和hash表的概念，首先根据key和hash函数计算出一个地址，addr = hash(key)，然后从hashtable中根据这个地址获取到key对应的值，value ＝ hashtable(addr)。所以key首先是必须可hash的，在swift中可hash，即需要遵守一个协议，一般的基本数据类型string、int、float等都遵守相应协议，因此，一个字典中它的key值也可以是多样的。 如：var dict ＝ ［”1“:a，2:b]
+字典操作，读：println(dict["1"])  写：dict[2] = 8 修改：dict.updatevalue(9,forkey("1"))。需要注意修改操作返回的是一个可选值，如果key存在，会替换key对应的值，并且返回key对应的之前的值，如果key不存在，会向字典中增加一个这个不存在key所对应的值，相当于往字典中添加了一个新的值，并且返回nil。删除：dict.removevalueforkey("1")，同样，如果存在这个key，就删除相应key对应的值，同时返回旧的value值，如果不存在这个key旧不做任何操作，返回nil。字典遍历，即类似元组遍历，同时也可以遍历所有key，或者所有value
+if let orignal = dict.updatevalue(9,forkey("1")){
+println("new:\(dict["1"])");
+println(orignal);
+}
+if let orignal = dict.removevalueforkey("1"){
+println(original)
+}
+for (key,value) in dict{
+println("\(key):\(value)")
+}
+for key in dict.keys{
+print(key)
+}
+for value in dict.values{
+println(value)
+}
+
+
+
+7、swift中语句的基本用法
+if语句，以及if中多分支执行语句，我们知道程序不可能只有一种执行顺序，因为实际生活中往往存在多种选择或者循环问题，下面从程序指令执行过程的角度考虑：
+顺序指令：比较好理解，选择指令：有些指令被执行，有些指令不会执行，循环指令：某些指令会循环不断的被执行。将这三种指令相结合，可以解决我们实际生活中的绝大部分问题。
+其中if else、while、for in、break、continue语句的使用与OC语言都非常相似，要特别注意的是switch语句与其他语言的switch语句有一些差别，主要区别为三点，（1）最后必须加default （2）可以去掉break了，oc中如果case语句后面不加break，会造成switch贯穿执行，即匹配到某一个case选项后，后面的所以case的语句都会被执行，而在switch中，不需要显示添加break，它匹配到case后，会自动退出。（3）case后面可以添加多个匹配条件，如case “a","b" 类似于或，只要有一个满足要求即可。（4）因此，switch支持广义匹配，匹配类型可以是整形、区间运算符、元祖、通配符（如_，表示任意一个字符），实例如下。（5）switch具有值匹配模式特性，在第三个例子中，case中的let x let y表示：x y可取任意值，一旦有值，会把它绑定到x y中，赋给x y，x y页可以为常量，［let x， let y］与［let（x，y）］两者的写法是等价的。在case匹配语句使用值绑定的情况下，可以在后面加上where条件，加上值绑定模式的匹配条件。
+let x = 1000 ｛
+ case 1...9 :
+   println("个位数");
+ case 10...49:
+  println("十位数")
+ default:
+  println("不符合")
+｝
+let point = (10,10)
+switch point ｛
+  case (0,0) :
+   println("坐标原点")
+ case (1...10, 1...10) :
+   println("x,y坐标位于1-10之间")
+  case(_, 0) :   
+   println("点在x轴")
+  default :
+   println("其他")
+｝
+swith point ｛
+ case (let x ,10)
+  println(x)
+case let(x, y)
+  println("\(x):\(y)“）
+case let x, let y
+  println("\(x):\(y)“）
+case let (x, y) where x == -y
+  println("\(x):\(y)“）
+//返回两个顶点的长和宽
+let po = (double, double) = (0,0)
+let p1 = (double, double) = (8,8)
+fun getlengthandwidth(p0:(double,double), p1(double,double)) -> (length:double, width:double) ｛
+   return (abs(p0.0-p1.0), abs(p0.1-p1.1))
+}
+let w = getlengthandwidth(p0, p1).width
+let h = getlengthandwidth(p0, p1).length
+//这里要通过名称访问元祖的某个元素，要定义返回值元组中每个元素的名称
+ 	 	 	 
+ 	 	 	 
+ 	 	 	 
+ 	 	 	 
+8、函数的相关概念
+定义：完成某个特定功能的代码块，该代码块可重复使用。
+语法：func 函数名(参数名:参数类型,参数名:参数类型,...) -> 函数返回值类型 ｛      //函数实现部分      ｝     
+调用语法：函数名（实际参数...）   函数名遵循驼峰命名法 ，可以有多个参数，多个返回值，也可以没有参数没有返回值（没有返回值时，可以不写->,或者写-> void）。实例代码如上面第四个例子所示，
+内部参数与外部参数概念：因为函数的定义实现与函数的调用是分开的，因此当我们看到某个函数调用的代码或者想要调用某个函数时，希望通过参数名就可以了解传递参数的含义，而不用去看函数的定义和实现。因此swift提供了一个外部参数，我们在调用函数的时候可以显示对这个外部参数赋值，这样函数的参数信息一目了然。类似于oc中通过方法名帮助我们理解参数含义，
+
+swift中则通过外部参数帮助我们理解函数传入参数的含义，实例代码如8-1所示，注意：函数实现部分，只能使用内部参数。如果内部参数和外部参数想使用同一个名字，即一个参数即表示内部参数又表示外部参数，可在参数名前面加上＃，进行标识
+
+如果你不设置函数的外部参数名，但是调用函数的时候默认会把内部参数名作为外部参数名，但是第一个参数不会，如下所示
+func test(first:Int, second:Int)
+{
+   print("hello");
+}
+test(1, second: 2)
+如果想在调用函数的时候想省略第二个外部参数名，即加上下划线_即可
+如下所示
+func test(first:Int, _ second:Int)
+{
+   print("hello");
+}
+test(1, 2)
+
+下面是一些实例代码
+8-1
+8-2
+8-3
+ 
+func divisionoperation(dividend a:double, divisor b:double) -> double ｛
+  return a/b
+}
+let res = divisionoperation(dividend:3.5, divisor:1.2)
+func joinstring(s1:string, tostring s2:string, joiner s3:string = "#") -> string ｛
+  return s1+s2+s3
+}
+let str = joinstring("hello", tostring:"world")
+func swap(a:int, b:int){
+let t = a
+a = b //这里会报错
+b = t
+}
+ 
+ 
+   函数默认值参数概念：即对函数中的某个参数指定默认值，相应在调用时可以不给这个默认值参数赋值，有一个需要注意的：当带有缺省值或默认值的这样一个参数，如果只有一个参数名，内部参数名将作为外部参数名使用，因为调用函数，修改其参数默认值，必须使用其外部参数名，否则报错，因此，在函数默认值参数的定义中，如果只定义了内部参数名，没有定义外部参数名，编译器会把默认值参数的内部参数名当作外部参数名使用，这属于编译器做的一个优化，实例代码如8-2所示，注意：对比c++中默认参数必须写在函数参数列表最尾部，不能移到参数列表前面，但是swift中现在是可以的，即可以出现在参数列表的任一位置。
+    常量参数与变量参数概念：默认函数的参数是常量类型，即只可以读，不可以写或者进行修改操作，如图8-3的使用，编译器会报错，我们可以把它定义为var类型，就可以修改了inout参数的使用：主要用在输入输出函数中，首先看8-4的代码,调用 swap(x,y)之后，最后的输出结果x还是10，y还是28，我们一般会认为x y值应该变化，其实并没有，它实际执行是将10赋值给a，19赋值给b，实际只修改了a b，没有修改x y，在c语言中也同样存在这样的问题，c语言的处理方式是可以 传递x y变量的地址，相应在swap函数中申明a b为指针。但是swift中没有指针，因此引入了一个inout关键字，通过这个关键字修饰参数。改进后的代码如8-5所示：注意：调用swap函数使用&符号不是c语言中取地址的含义，而是将x y变量赋值给函数a b参数。总结：如果我们希望一个函数能修改外部的变量，首先在函数定义时需把参数定义为inout，输入输出参数类型，其次传递实参时需在变量前面加一个&的形式传递过去，等价于a是x的引用，b是y的引用，传递的时候是把x y整个变量都传递过去，而不只是传递变量对应的值10 28，通过&x &y与inout a inout b的配合，最终达到修改函数传递参数的目的。注意：符号&后面不能直接跟一个具体值，需要传一个变量名。
+8-4
+8-5 
+8-6
+8-7
+8-8
+func swap(var a : int, var b : int){
+let t = a
+a = b
+b =t }
+ 
+var x = 10
+var y =  28
+swap(x,y)
+ func swap(inout a : int, inout b : int){
+let t = a
+a = b
+b =t }
+ 
+var x = 10
+var y =  28
+swap(&x,&y)
+func add (array : [int] -> int ｛
+var sun = 0
+for i in array ｛
+ sum +=i
+}
+println(add([1,2,3,4,5]))
+for array(array : int...) -> int ｛
+var sum = 0
+for i in array ｛
+ sum += i
+｝
+println(add(2,3,4))
+fun add (a:int, b:int) -> int ｛
+return a+b
+｝
+fun sub (a:int, b:int) -> int ｛
+return a-b
+}
+     变参参数，即参数个数可以是不确定的，要实现变参参数，我们首先想到的可能是通过数组的形式实现，如8-6实例代码所示，在swift中对变参参数进行了定义，语法格式为，参数名：参数类型...  ,只需要修改变量类型，即在参数个数不确定，但是参数类型都是一致的情况下可以这样使用，即把它当作一个数组（集合），并且 在调用时不用传数组，而是像调用函数一样，传递任意个相应类型的参数，如8-7所示，函数实现不变，并且在调用函数时做一些修改即可。注意：变参函数中变参必须放在参数列表最后面。
+函数类型：（参数、返回值类型）类型相同的函数定义如下：函数参数类型以及返回值类型都一样只是实现不一样。如8-8所示，可以将上面的两个函数抽象出公共的函数类型（int, int) -> (int)，可以对这个函数类型做如下的一些定义。
+     定义一个函数类型常量或变量：var calfunc: (int, int) -> int = add，这样非常类似c语言中函数指针以及oc中的block，申明这样一个变量有一个好处即可以对它重新赋值，calfunc = sub println(calfunc(3,5)，此时得到是sub函数计算的结果。因为一个函数类型的变量非常灵活，它可以指向相同类型的其他函数，可以达到c语言中函数指针及oc中block一样的功能。
+函数类型作为一个参数，如8-9所示，将其关联。
+8-9
+8-10
+9-1
+9-2
+ 
+func subcalfunc(a:int, b:int, #op:(int, int) -> int) ｛
+return op(a, b)
+}
+println(subcalfunc(20.35,op:sub)
+func max(a: int, b:int) -> int ｛
+return a>b?a:b
+｝
+func min(a:int, b:int) -> int ｛
+return a>b?b:a
+｝
+func choosefunc(#getmax:bool ) -> (int, int) -> (int)｛
+return getmax?max:min
+｝
+var myfunc:(int, int) -> (int) = choosefunc(getmax:true)
+println(myfunc(2,9))
+func funcname(参数) -> 返回值类型 ｛
+执行语句
+｝
+｛ （参数) -> 返回值类型 in 
+执行语句
+｝
+let sayhello:() -> void = ｛
+println("hello word")
+}  //无参闭包，() -> void可以不写
+sayhello()
+let add:(int, int) -> (int) = ｛
+(a:int , b:int) -> int in 
+return a+b
+}   //有参闭包，
+println(add(3,5))
+ 
+函数返回一个函数类型的返回值：当根据输入参数判断执行哪一个函数时使用，如8-10所示
+
+
+
+
+9、闭包的基本概念
+   闭包：从函数的定义来理解，完成某个特定功能的代码块，在swift中可以理解为闭包是一个更轻量级的函数（自包含的函数代码块），可以把函数分为三大类（1）全局函数（有名函数）。（2）闭包表达式（匿名），能捕获上下文中的常量或者变量，牵涉到内存管理，值捕获。(3)嵌套函数。
+
+   闭包表达式的定义、申明和使用，与函数的区别，闭包没有函数名，但是它还是由参数类型和返回值类型构成，并且参数类型和返回值类型是写在大括号里面的，并且还有注意加一个关键字in，如果没有参数和返回值可以不加in，如9-1所示，上面是函数定义，下面是闭包定义。理解闭包表达式它实际也是有类型的， 在swift中很多都可以称之为一个类型，而类型又可以定义一些常量或变量。如9-2所示。上面的用法只属于非典型性用法，因为这些用法跟函数的使用还没有很多区别。
+    
+   闭包表达式的回调用法：即闭包比较典型的用法，下面9-3是一个冒泡排序的实例代码，对它进行改造，将array[j] > array[j+1]的比较通过闭包实现，假设这个比较需要处理比较多的内容，得到9-4所示代码，在9-4的bubbleSort2(&array, intCmp)方法中，还可以把intCmp方法的实现代码直接移过来，不定义为变量。如果要修改比较策略，譬如字符串比较，数字最低位比较，可以只修改闭包函数。类似于block回调，我们可以定义多种block函数的实现，调用bubblesort只需要告诉它一个排序数据以及排序策略。相比于函数来说，闭包可以省略函数名，直接函数实现。通过闭包、block实现多种变化的功能，我们可以传递闭包表达式的多种不同实现，至于闭包表达式何时被调用，是由外层的函数决定的。
+9-3
+9-4
+9-5
+9-6
+func showArray(array:[Int]){
+    for x in array{
+        print("\(x)")
+    }
+    print("")
+}
+ 
+func bubbleSort(inout array:[Int]){
+    let cnt:Int = array.count
+    for var i = 1; i < cnt ; i++ {
+        for var j = 0; j < cnt - i; j++ {
+            if (array[j] > array[j+1]){
+                let t = array[j]
+                array[j] = array[j+1]
+                array[j+1] = t
+            }
+        }}
+}
+ 
+var array = [6,5,9,3,5,2,10]
+showArray(array)
+bubbleSort(&array)
+showArray(array)
+let intCmp = { (a:Int,b:Int) -> Int in
+    if a > b {
+        return -1
+    } else if a < b {
+        return 1
+    } else{
+        return 0
+    }
+}
+ 
+func bubbleSort2(inout array:[Int]){
+    let cnt:Int = array.count
+    for var i = 1; i < cnt ; i++ {
+        for var j = 0; j < cnt - i; j++ {
+            if (intCmp(array[j], array[j+1]) == -1){
+                let t = array[j]
+                array[j] = array[j+1]
+                array[j+1] = t
+            }
+        }
+    } }
+showArray(array)
+bubbleSort(&array)
+bubbleSort2(&array, intCmp)
+showArray(array)
+
+bubbleSort2(&array, {
+    (a,b) in
+    if a > b {
+        return -1
+    } else if a < b {
+        return 1
+    } else{
+        return 0
+    }
+})
+
+
+bubbleSort2(&array, {
+    if $0 > $1 {
+        return -1
+    } else if $0 < $1 {
+        return 1
+    } else{
+        return 0
+    }
+})
+sort($array,{
+    return $0 < $1
+})
+sort($array,{
+  $0 < $1
+})
+9-6-1
+func bubbleSortFunc(inout array: [Int]){
+    let cnt = array.count
+    func swapValue(inout a:Int, inout b:Int){
+        let t = a
+        a = b
+        b = c
+    }
+    ....
+}
+9-6-2
+func getIntFunc(inc :Int) -> (Int) -> (Int){
+    func incFunc(v: Int) -> Int{
+        return inc + v
+    }
+    return incFunc
+}
+ 9-6-3
+let incFunc1 = getIntFunc(12)
+print(incFunc1(15))
+func getIncFuc(inc : Int) -> (Int) -> (Int){
+    var mt = 20
+    func incFunc2(v:Int) -> Int{
+        mt++
+        return inc + v + mt }
+    return incFunc2
+}
+
+   闭包表达式的语法优化：为什么要优化，如何优化，借用swift强大的类型推断功能，实现闭包表达式类型优化，  （1）在函数中传递闭包表达式时省略类型，前提是函数申明中包含了闭包类型时，可以根据上下文推断，省略闭包参数类型及返回值类型。如9-5所示，（2）进一步优化，参数都可以省略，而是使用$0 $1来代替，如9-5下面所示
+   
+   尾随闭包：由于闭包表达式主要用于函数回调，在函数调用时，为了表达更清楚，书写更方便，应该将闭包作为函数最后一个参数，即尾随闭包。当闭包的执行语句，只有单个return表达式的情况下，可以简写去掉return，如9-5下面的代码所示。
+   
+   嵌套函数：在函数内部申明一个函数，并且这个内部函数只能在内部使用，即它的作用域是在内部函数左右开始，往下到它所在函数结束的位置，同时函数通过闭包捕获上下文的值也属于嵌套函数。如9-6所示，嵌套函数仅仅为它所在的函数服务，所以有一个优点就是可以让程序更直观更清楚。
+   
+   闭包捕获值定义：嵌套／内部函数可以引用不是它自己而是它所在外部函数申明的变量或常量，因此我们需要研究它捕获的原则，捕获的行为。在9-6-2的实例代码中，定义了一个嵌套函数，我们知道在函数内部申明的局部变量它的作用域和生命周期只在调用函数的时候有效，函数调用结束就不生效了，但是在上面这种情况下，inc被返回的嵌套函数保留了，我们可以暂时理解为一个副本，这个过程可理解为一个上下文的捕获。从内存管理和函数调用栈的角度考虑，一般认为inc随着函数getIntFunc的调用结束已经没有了，但是嵌套函数中使用了inc局部变量，我们就称之为值捕获，从9-6-3的例子中，会发现每次调用这个函数，返回值都会加1，说明嵌套函数捕获mt后，相当于拷贝了mt的一个副本，会记录mt上一次的值，我们可以理解为mt相当于incFuc的一个全局变量，我猜想如果mt是self，不做保护措施，就会出现循环引用啦。
+
+   泛型：可以创建泛型的函数或者类型，之前对泛型的了解只停留在它的使用，对于如何自己去自定义一个泛型没有想过，看了文档上的例子也还不是太理解，后面还要多看看。以
+func swapTwoValues<T>(inout a: T, inout b: T) {} 这个函数为例,通过<T> 占位类型名 同时指定函数参数的类型，在调用的时候直接传入一个任意类型即可。如果需要传入多个占位类型，可以用逗号隔开，进行如下表示 <T,T>。数组是非常典型的泛型函数，它支持任意类型，现在如果自定义一个特定的数组：栈，就需要使用泛型函数了。
+
+
+   协议和扩展：主要使用关键字protocol和extension来进行定义，它的使用和oc语言差不多（在语法定义上有一些差别，并且swift继承某个类和使用协议的语法是一样的在 : 后面，感觉这样不是很好，只是推荐把父类写在前面），可以将协议名作为一种命名类型来使用的做法还不是很理解（现在理解了，可以把协议类型作为函数参数类型、返回值类型等用法，充分发挥协议的优势，可以灵活的创建和传递同一个方法的不同实现），文档上的例子也标注了这样使用的注意事项。为什么swift的协议中要申明属性呢，与以前只申明方法相比，申明属性有什么好处呢？通常理解实现了协议的类型，该类型中必须拥有协议中相应的属性和方法（即协议只关心必须要有某些属性和方法，不关心属性和方法的具体值和具体实现）。注意：在协议中使用class关键字申明的类属性和类方法，当枚举和结构体实现这个协议时，需要使用static关键字。且协议中的方法不支持默认参数值。
+   
+   理解扩展的使用场景：在无法修改源代码，或者修改已有类不可行的情况下，需要对已有的类、结构体、枚举、协议等进行扩展。也可以对协议扩展以及补充某个类型为协议类型。
+   
+   
+   枚举和机构体：枚举与其他语言的一个区别是它可以定义方法，并且它的语法也有了一些变化。文档上说结构体和类的一个最大区别是结构体是传值，类是传引用，这个概念跟我之前的理解好像有偏差， 还要多看看。
+   
+   
+   对象和类：对类的定义类似c语言有构造器（有继承关系的情况下，会做以下几步，1、设置子类的属性值，2、调用父类的构造器，3、还可以改变父类定义的属性值等等）和析构函数，创建类的时候不需要标准根类，与oc语言的区别。子类重写父类的方法需要用override标记。可以在类中定义属性的getter和setter方法，注意它的语法格式。同时swift中还多了一个willset和didset的方法概念。方法与函数有一个重要区别，方法的参数名（除了第一个参数以外的其他参数名）需要在调用的时候显示说明，最后提到如何处理变量的可选值，看起来感觉有些怪，这个还要多看看。
+
+   函数和闭包；可以通过元组让一个函数返回多个值。并且函数参数可以是一个可变参数（numbers: Int...) ，在函数内部使用时类似于数组。函数可以嵌套，可以作为另一个函数的返回值，可以作为另一个函数的参数。
+可以使用{}来创建一个匿名闭包，使用in将参数和返回值类型申明与闭包函数体进行连接。闭包在很多种情景下可以进行一些简化，如单个语句的闭包可以省略参数返回值类型申明以及in关键字，
+可以使用参数位置$0 $1来直接引用参数。当闭包作为某个函数的最后一个参数时，可以直接跟在括号后面。
+
+
+   控制流：相比于oc，有一些简化，如if后面的条件和for循环变量括号可以省略，但是语句体的大括号是必须的。有一个问题不是太明白，if语句后面必须跟一个布尔表达式，那为什么可以使用
+if let name = optionalName ｛｝这样的类似语法处理值缺失的情况，其中var optionalName: String? = "hello"是一个可选值。 swift中的switch相对于其他语言更加强大，可以支持任意类型的数据以及各种比较操作。并且它可以省略break语句，但是一定不能省略default。
+可以使用for in 加上元组来遍历一个字典。在循环中可以使用1..<n表示范围，但是不包括上界，使用1...n才包括上界
+
+
+
+相关参考：
+
+http://special.csdncms.csdn.net/the-swift-programming-language-in-chinese/index.shtml  中文的
+
+https://itunes.apple.com/cn/book/the-swift-programming-language/id881256329?mt=11 英文的
