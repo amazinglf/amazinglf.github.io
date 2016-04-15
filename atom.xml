@@ -4,7 +4,7 @@
   <title><![CDATA[My Octopress Blog]]></title>
   <link href="http://amazinglf.github.io/atom.xml" rel="self"/>
   <link href="http://amazinglf.github.io/"/>
-  <updated>2016-04-15T17:47:50+08:00</updated>
+  <updated>2016-04-15T17:51:41+08:00</updated>
   <id>http://amazinglf.github.io/</id>
   <author>
     <name><![CDATA[Your Name]]></name>
@@ -451,7 +451,7 @@ if let name = optionalName ｛｝这样的类似语法处理值缺失的情况�
  (3) Method Swizzling实例代码
  以在NSString的一个分类中添加一个新的方法myLowercaseString ,与NSString已经存在的lowercaseString方法的交换为例，首先在分类中定义如下方法：
 
- @interface NSString (myAdditions)
+  @interface NSString (myAdditions)
  - (NSString *)myLowercaseString;
  @end
 
@@ -461,11 +461,9 @@ NSString *lowercase = [self myLowercaseString];
 NSLog(@"输出结果为:%@ =&gt; %@", self, lowercase);
 return lowercase;
 }
-</code></pre>
+ @end
 
-<p>   @end</p>
-
-<pre><code> // 通过下面代码来交换上面两个方法
+ // 通过下面代码来交换上面两个方法
 Method originMethod = class_getInstanceMethod([NSString class], @selector(lowercaseString));
  Method swappedMethod = class_getInstanceMethod([NSString class], @selector(myLowercaseString));
  method_exchangeImplementations(originMethod, swappedMethod);
