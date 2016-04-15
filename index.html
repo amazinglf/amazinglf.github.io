@@ -9,8 +9,12 @@
   <meta name="author" content="Your Name">
 
   
-  <meta name="description" content="Swift学习之基础部分
-常量和变量,主要掌握根据它们使用的场景，对不会变化的值使用常量，对不断变化的值使用变量。 注释：单行注释使用//，对于多行注释还可以使用嵌套。 分号：Swift中可以省略分号，如果在同一行有多条语句，需要用分号隔开。 整数：Int UInt 可以通过它的最大值、 &hellip;">
+  <meta name="description" content="入门 一、信号RACSignal 单个信号的创建方式
+（1）RACObserve观察成员变量值的信号，前提是该属性必须支持KVO
+（2）RAC封装UI控件事件输入值变化传递的信号
+（3）通过RACSignal类方法创建的信号
+（4）将某个信号赋值给某个成员变量，也就是信号绑定
+（5） &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -66,6 +70,210 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2016/02/18/reactive-cocoaxue-xi-bi-ji/">Reactive Cocoa学习笔记</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-02-18T23:40:18+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>18</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>11:40 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>入门</p>
+
+<h3>一、信号RACSignal</h3>
+
+<pre><code> 单个信号的创建方式
+（1）RACObserve观察成员变量值的信号，前提是该属性必须支持KVO
+（2）RAC封装UI控件事件输入值变化传递的信号
+（3）通过RACSignal类方法创建的信号
+（4）将某个信号赋值给某个成员变量，也就是信号绑定
+（5）对信号进行链式和过滤生成一个新的信号
+
+ 组合信号
+
+ 通过RACSignal的类方法combinelatest将上面的单个信号进行组合
+
+  基本概念和用法
+
+  信号的生命周期：RACSignal从创建到在block中发送sendNext sendCompleted.以及－对信号执行delay、等操作－被订阅者订阅subscribeNext subscribeCompleted的过程。类似于一个工厂，该工厂只有在消费者需要某个产品［somesignal subscribernext ］时，工厂才会去生产相应产品，即执行相应代码［subscriber sendnext：somedatat］，这样的信号被称为冷信号，还要一种热信号可以参考http://tech.meituan.com/tag/ReactiveCocoa#rd
+
+
+  创建自定义的RACSignal，实现方式，
+  Signal获取到数据后，会调用Subscriber的sendNext, sendComplete, sendError方法来传送数据给Subscriber，Subscriber自然也有方法来获取传过来的数据，如：[signal subscribeNext:error:completed]。可以这样理解，RACSignal需要传入一个实现RACSubscriber协议的类，并且会调用相应协议的方法sendNext...。而这些相应协议方法的实现在subscribeNext...等的block中，相当于subscribeNext...替换sendNext...协议方法的实现，改了一下方法名称，本质是在subscribeNext...封装的方法中对协议方法实现进行了一些处理。具体可参考后面的分析。
+
+  注意这个方法带有三个参数这样只要没有sendComplete和sendError，新的值就会通过sendNext源源不断地传送过来，举个简单的例子：
+   RACSignal *signal = [RACSignal createSignal:^ RACDisposable * (id&lt;RACSubscriber&gt; subscriber) {
+NSLog(@"triggered");
+[subscriber sendNext:@"foobar"];
+[subscriber sendCompleted];
+return nil;
+}];
+
+[RACObserve(self, username) subscribeNext: ^(NSString *newName){
+NSLog(@"newName:%@", newName);
+}];
+
+ 可以在上面的方法后直接添加error completed参数的block，也可以分开写，如下所示：
+ [signal subscribeCompleted:^{
+NSLog(@"subscription %u", subscriptions);
+ }];
+
+    如果有多个subscriber的订阅者，那么signal就会又一次被触发，控制台里会输出两次triggered。这或许是你想要的，或许不是。如果要避免这种情况的发生，可以使用 replay 方法，它的作用是保证signal只被触发一次，然后把sendNext的value存起来，下次再有新的subscriber时，直接发送缓存的数据。 并且当一个信号存在多个订阅者时，也有可能产生的副作用。譬如，在一个block中修改外面的__block变量的值，会对后面的订阅者获取到的这个值产生影响。
+</code></pre>
+
+<h3>二、相关实例代码</h3>
+
+<pre><code>// KVO
+[RACObserve(self, username) subscribeNext:^(id x) {
+NSLog(@" 成员变量 username 被修改成了：%@", x);}];
+// target-action
+self.button.rac_command = [[RACCommand alloc] initWithSignalBlock:^RACSignal *(id input) {
+ NSLog(@" 按钮被点击 ");
+ return [RACSignal empty];}];
+ // Notification
+ [[[NSNotificationCenter defaultCenter]rac_addObserverForName:UIKeyboardDidChangeFrameNotificationobject:nil]subscribeNext:^(id x) {
+ NSLog(@" 键盘 Frame 改变 ");}];
+ // Delegate
+ [[self rac_signalForSelector:@selector(viewWillAppear:)] subscribeNext:^(id x) {
+ debugLog(@"viewWillAppear 方法被调用 %@", x);}];
+</code></pre>
+
+<p>注意事项：</p>
+
+<pre><code>（1）RACObserve使用了KVO来监听property的变化，只要username被自己或外部改变，block就会被执行。但不是所有的property都可以被RACObserve，该property必须支持KVO，比如NSURLCache的currentDiskUsage就不能被RACObserve
+
+（2）rac_textSignal是RAC为UITextField添加的category，只要usernameTextField的值有变化，这个值就会被返回(sendNext)。combineLatest需要每个signal至少都有过一次sendNext
+
+ （3）UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"" message:@"Alert" delegate:nil cancelButtonTitle:@"YES" otherButtonTitles:@"NO", nil]; 
+ [[alertView rac_buttonClickedSignal] subscribeNext:^(NSNumber *indexNumber) {     
+  if ([indexNumber intValue] == 1) {         
+     NSLog(@"you touched NO");     
+   } else {         
+     NSLog(@"you touched YES");     
+  } }]; 
+  [alertView show];
+
+ （4）有了这些Category，大部分的Delegate都可以使用RAC来做。或许你会想，可不可以subscribe NSMutableArray.rac_sequence.signal，这样每次有新的object或旧的object被移除时都能知道，UITableViewController就可以根据dataSource的变化，来reloadData。但很可惜这样不行，因为RAC是基于KVO的，而NSMutableArray并不会在调用addObject或removeObject时发送通知，所以不可行。不过可以使用NSArray作为UITableView的dataSource，只要dataSource有变动就换成新的Array，这样就可以了。
+
+ （5）说到UITableView，再说一下UITableViewCell，RAC给UITableViewCell提供了一个方法：rac_prepareForReuseSignal，它的作用是当Cell即将要被重用时，告诉Cell。想象Cell上有多个button，Cell在初始化时给每个button都addTarget:action:forControlEvents，被重用时需要先移除这些target，下面这段代码就可以很方便地解决这个问题：
+ [[[self.cancelButton
+rac_signalForControlEvents:UIControlEventTouchUpInside]
+takeUntil:self.rac_prepareForReuseSignal]
+subscribeNext:^(UIButton *x) {
+// do other things
+}];
+</code></pre>
+
+<h3>三、RACTurple RACStream RACSubject  RACScheduler RACSubscriber</h3>
+
+<pre><code>  （1）在Objc下，输入输出的“值”都可以用id类型，遇到多个值的组合就用RACTurple
+  （2）  RACStream作为一个描述抽象的父类，它定义的几个基本方法自己并没有实现，是由具体子类来实现，RACStream的两个子类分别是RACSignal和RACSequence，可以对应到下面的图进行理解。
+  （3）RACSubject(继承自RACSignal，可以理解为自由度更高的signal)。比如一个异步网络操作，可以返回一个subject，然后将这个subject绑定到一个subscriber或另一个信号。
+   - (void)doTest
+{
+RACSubject *subject = [self doRequest];
+
+[subject subscribeNext:^(NSString *value){
+    NSLog(@"value:%@", value);
+}];
+}
+
+  - (RACSubject *)doRequest
+ {
+RACSubject *subject = [RACSubject subject];
+// 模拟2秒后得到请求内容
+// 只触发1次
+// 尽管subscribeNext什么也没做，但如果没有的话map是不会执行的
+// subscribeNext就是定义了一个接收体
+[[[[RACSignal interval:2] take:1] map:^id(id _){
+    // the value is from url request
+    NSString *value = @"content fetched from web";
+    [subject sendNext:value];
+    return nil;
+}] subscribeNext:^(id _){}];
+return subject;
+ }
+
+ （4）对RACScheduler作用的理解，先 通过下面的文字了解了它的作用，还没有写具体代码
+ RACScheduler是RAC里面对线程的简单封装，事件可以在指定的scheduler上分发和执行，不特殊指定的话，事件的分发和执行都在一个默认的后台线程里面做，大多数情况也就不用动了，有一些特殊的signal必须在主线程调用，使用-deliverOn：可以切换调用的线程。
+订阅者执行时的block一定非并发执行，也就是说不会执行到一半被另一个线程进入，也意味着写subscribeXXX block的时候没必要做加锁处理            However, RAC guarantees that no two signal events will ever arrive concurrently. While an event is being processed, no other events will be delivered. The senders of any other events will be forced to wait until the current event has been handled.
+
+ (5) RACSubscriber是定义的一个协议，参照博客http://nathanli.cn/2015/08/27/reactivecocoa2-%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/的内容，对它理解的更加深入，自己总结如下：
+  RACSubscriber协议定义了sendNext sendError sendCompleted 等方法，首先明白协议使用的两个条件：1 有类实现了协议的方法 2 其他类中定义了协议对象，调用了协议的方法。在源码中的体现就是RACSignal里面（创建方法等方法中）封装了对这个协议方法的调用，在RACSignal的订阅方法subscriber中传入一个实现了协议方法RACSubscriber的对象。即外部要订阅这个信号就必须实现RACSubscriber协议中的方法，实际就是对订阅的值进行处理（在一层协议方法中在嵌套一层协议方法）。  其次源码对实现协议中方法的对象进行了一些封装，将协议方法的实现转化为block。更进一步将前面封装的block实现的类作为RACSignal的一个分类方法，这样对外部隐藏RACSubscriber，直接对订阅值value进行一些处理。
+
+   - (void)nl_subscribeNext:(void (^)(id x))nextBlock error:(void (^)(NSError *error))errorBlock completed:(void (^)(void))completedBlock {
+   NLSubscriber *subscriber = [NLSubscriber subscriberWithNext:nextBlock error:errorBlock completed:completedBlock];
+  [self subscribe:subscriber];
+ }
+
+   前面的分析只是明白了 RACSignal内部给我们封装好了 RACSubscriber这个协议的使用，还应该要明白 RACSignal它最重要的方法 [self subscribe:subscriber];的实现细节。可以在源码里面看看下面这个方法试的实现细节
+  @interface RACSignal (Subscription)
+  /*
+  *  `subscriber` 订阅 receiver 的变化。由 receiver 决定          怎么给 subscriber 发送事件。
+  *简单来说，就是由这个被订阅的信号来给订阅者 subscriber 发送 `sendNext:` 等消息。*/
+   - (RACDisposable *)subscribe:(id&lt;RACSubscriber&gt;)subscriber;
+   @end
+
+   在博客中完全从订阅者RACSubscriber （即先不考虑信号是怎么发送的）以及 设计模式的角度详细描述了它的实现过程，如下
+   （1）定义了一个协议RACSubscriber ，申明它的三个方法sendNext sendError sendCompleted。定义一个实现这个协议方法的具体类，如NLSubscriber
+   （2）在RACSignal的分类 (Subscription)中，定义一个subscribe方法，需要传入一个实现了RACSubscriber协议的类。如上面方框中代码所示。
+
+    通过上面两步，我们就可以简单的定义一个RACSignal 一个NLSubscriber，并且把NLSubscriber传给RACSignal分类 (Subscription)中的subscribe方法。
+   但是这样有一个问题就是，如果有多个订阅者，每个订阅者都要创建一个类，实现RACSubscriber协议以及协议的方法。因为每个订阅者的实现方法有很多种，很难实现复用。对于在某些场景中，譬如某个算法的实现，它的实现方式只可能是固定的几种方式（或者说几种策略，可称为策略模式），我们可以通过这种方式去实现，但是对于多个订阅者的实现方式不能复用的情况，用上面的方法就不是很好。解决办法是使用block，将协议的实现方法用block来代替。
+</code></pre>
+
+<p>上面的实现类似策略模式，下面类似适配器模式。</p>
+
+<pre><code>  （1）定义一个实现RACSubscriber协议的通用类，在这个通用类中，定义与协议方法实现相关的block，并且作为这个通用类的属性，在通用类的初始化方法中给这些block属性传值，同时在协议方法实现中去执行这些block。
+   这样，我们可以通过定义一个RACSignal，一个通过block初始化的通用类，将这个通用类传入RACSignal分类 (Subscription)中的subscribe方法。这样实现通过block的方式去定义i 不同的实现，而不需要去定义多个不同的类去实现了。
+   源码中在上面的基础之上，将通用类的初始化，以及传给subscribe方法的过程封装到了RACSignal的一个分类方法中，只需要在参数定义中把对应的block传递过去即可。对于用户来说只需要创建RACSignal对象，调用它的sendNext...等方法，同时调用subscribeNext...等方法完成前面调用方法的具体实现。并且后面有实现的情况下触发前面的调用，与这个相关的实现细节应该在RACSignal源码的具体实现中去分析。
+</code></pre>
+
+<h3>四、注意事项</h3>
+
+<pre><code>  （1）RAC 在应用中大量使用了 block，由于 Objective-C 语言的内存管理是基于 引用计数的，为了避免循环引用问题，在 block 中如果要引用 self，需要使用@weakify(self)和@strongify(self)来避免强引用。另外，在使用时应该注意 block 的嵌套层数，不恰当的滥用多层嵌套 block 可能给程序的可维护性带来灾难。
+  （2）RAC在使用时有一些注意事项，可以参考官方的DesignGuildLines。
+  （3）当一个signal被一个subscriber subscribe后，这个subscriber何时会被移除？答案是当subscriber被sendComplete或sendError时，或者手动调用[disposable dispose]。当subscriber被dispose后，所有该subscriber相关的工作都会被停止或取消，如http请求，资源也会被释放。
+  （4）Signal events是线性的，不会出现并发的情况，除非显示地指定Scheduler。所以-subscribeNext:error:completed:里的block不需要锁定或者synchronized等操作，其他的events会依次排队，直到block处理完成。
+  （5）Errors有优先权，如果有多个signals被同时监听，只要其中一个signal sendError，那么error就会立刻被传送给subscriber，并导致signals终止执行。相当于Exception。生成Signal时，最好指定Name, -setNameWithFormat: 方便调试。
+  （6）block代码中不要阻塞。
+</code></pre>
+
+<p><a href="http://limboy.me/">http://limboy.me/</a>
+<a href="http://blog.sunnyxx.com/tags/Reactive%20Cocoa%20Tutorial/">http://blog.sunnyxx.com/tags/Reactive%20Cocoa%20Tutorial/</a></p>
+
+<p>进阶</p>
+
+<h3>一、RAC原理</h3>
+
+<pre><code>   关于原理性的知识应该在一开始学习的时候就要深刻理解的， 但是刚开始学总会好高骛远，总想着马上就会用了，其实虽然学会了一些简单的用法了，一到比较难的知识点理解起来就比较困难了，就是因为一开始没有理解它的根本原理。下面是经过RAC培训之后自己的总结。
+
+   RAC来源于FRP（函数式响应式编程）思想：随时间变化的数据流在这个思想的基础上还有ReactiveX By Microsoft，它的一些基本操作与RAC也是比较类似的，http://rxmarbles.com/ 
+
+   而RAC是通过订阅者的方式来控制数据流的开始时间点，结束时间点，并且通过一些方式对随时间变化的数据流做一些控制（过滤，整合等）。
+
+   比较常见的一种场景，对网络请求返回数据的订阅，如果是冷信号，会导致网络请求数据的操作执行多次，而如果是热信号，可能会产生一定的副作用或者数据不一致，感觉在这种有网络请求的场景下使用信号要特别注意。如何正确的使用它，防止它不犯错误。
+</code></pre>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1713,347 +1921,9 @@ NSString </em>lowercaseString = [string lowercaseString];
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/04/15/git-xue-xi-bi-ji/">Git 学习笔记</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-04-15T11:09:27+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>15</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>11:09 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>1、理解git在本地常用的操作
-  （1）git status命令的作用，即从查看本地仓库中出现了的修改和变化的角度去想，如添加、修改和删除文件的操作。比较常见的就是添加新的文件和修改仓库中的某个文件。该命令方便我们查看我们在本地所做的一些修改。 <br/>
-   2）git本地操作的三个区域<br/>
-         工作区  暂存区  版本库</p>
-
-<p>   1、下面以新增加的文件为例，通过git status查看，它是Untracked files（未跟踪的文件）－》工作区。运行git add－》暂存区。再运行git commit－》本地版本库。
-   如果在暂存区的时候对这个文件进行了修改，通过git status查看，该文件一个还在暂存区Changes to be committed，一个在工作区Changes not staged for commit。</p>
-
-<p>   2、下面对修改本地仓库中的某个文件为例。通过status查看，它是Changes not staged for commit:－》工作区。运行git add－》暂存区，再运行git commit－》本地版本库。如果在暂存区对这个文件进行修改，结果与前面也是一样的。（即出现两个一样的文件）</p>
-
-<p>   3、下面对删除本地仓库中的某个文件为例，如果是手工删除或者使用［rm 文件名］删除，通过status查看，Changes not staged for commit－》工作区。运行git rm 文件名－－》暂存区。再运行git commit－》本地版本库，该文件就不再纳入版本管理 git rm &ndash;cached readme.txt  要移除跟踪但不删除文件，即从跟踪清单中删除。比如一些大型日志文件或者一堆 .a 编译文件比较适应  git mv file_from file_to  对文件改名</p>
-
-<p>   最后总结，在工作区，文件有可能是新增加未跟踪的，有可能是修改未暂存，有可能是暂存后又修改未暂存的，有可能是跟踪后暂存然后修改未暂存的。开始总是会把未跟踪、未暂存、未提交这几种状态弄晕，其实只是表示一个状态，要与他实际的工作区域对应上，即从前面两个角度去分析。</p>
-
-<p>2、远程仓库使用（注意与本地仓库进行区分）
-   方式一：git clone git地址  克隆一个远程仓库到本地，会在本地当前目录下创建一个和远程仓库一样的文件夹，testlf。进入这个文件夹，就可以看到➜  testlf git:(master) . 用git管理项目的标识
-   方式二：git init   对当前文件夹下的文件用git进行管理。会在当前文件夹下生成一个.git的隐藏文件。但是没有与任何远程仓库关联。那如何与远程仓库进行关联呢？
-    1、git remote add pb git://github.com/paulboone/ticgit.git   //本操作含义：添加一个新的远程仓库，可以指定一个简单的名字,还没有进行任何关联，一般默认的仓库名是origin
-     2、git fetch pb  / /抓取所有 Paul 上的数据。完成这个操作，Paul 的主干分支（master）已经完全可以在本地访问了，对应的名字是 pb/master
-     3、你可以将它合并到自己的某个分支，或者切换到这个分支，看看有些什么有趣的更新 （本地仓库和远程仓库的内容就相当于两个分支了，还要自己去尝试做）
-    总结：不过我觉得一般开始管理远程仓库，都会先在远程上创建一个仓库create repository。然后将他clone到本地。在这个仓库对应的本地文件夹下创建项目，或者将要用git管理的工程复制到这个项目下，就可以对它add。。。等的操作进行管理和push到远程仓库了。并且本地所做的任何更改，都可以提交到远程仓库。</p>
-
-<p>3、本地分支的新建与合并
-     （1）基本命令
-      git branch 分支名   //新建一个分支
-      git checkout 分支名   //切换到相应分支
-      注意：切换分支的时候最好保持一个清洁的工作区域。切换到下一个分支之前，保证工作区、暂存区的内容都已经提交。不然会混淆。并且它会和你即将检出的分支产生冲突从而阻止 Git 为你切换分支
-      git branch   //不加任何参数，可以查看当前分支清单，分支前的＊号表示当前所在分支
-      git branch -v //查看各个分支最后一个提交对象的信息
-      git branch &ndash;merged  //查看已经合并的分支
-      git branch – no-merged  //查看没有合并的分支
-      git branch -d 分支名 //可以删除已经合并了的，如果删除没有合并的，会提示错误
-      git branch -D 分支名  //强制删除没有合并的分支
-     （2）分支指针
-       master分支指针
-       创建新的分支，就相当于创建了一个新的分支指针。
-       head指针：切换分支时，指向你当前工作的分支
-      画分支关系图的时候，主干分支横着画，创建的新分支竖着画，这样理解更清晰一些，如果一个分支下还有多个分支时，也可以竖着并行排列即可。
-       （3）分支合并
-       比较容易出现的一种情况即，在某个分支下新建一个分支后，做了很多次提交。而（从原来分支远程pull数据下来的时候，或者本地去做了一些修改的时候）原来的分支页进行了提交，并且可能与其他分支进行了merge操作，如下所示：</p>
-
-<p>这里执行：
-git merge iss53</p>
-
-<p>  Git 会用两个分支的末端（C4 和 C5）以及它们的共同祖先（C2）进行一次简单的三方合并计算。
-合并后的结果重新做一个新的快照，并自动创建一个指向它的提交对象（C6）。如下所示：</p>
-
-<p>Git 作了合并，但没有提交，如果有冲突会提示。
-$ git merge iss53
-Auto-merging index.html
-CONFLICT (content): Merge conflict in index.html
-Automatic merge failed; fix conflicts and then commit the result.
-并且停下来等你解决冲突，可以用 git status 查阅：并且会显示未解决冲突的具体文件。直接打开相应文件，用vim进行手动修改即可</p>
-
-<p>可以看到 很多等号 隔开的到 很多尖括号 HEAD的上半部分，是 HEAD（即 master 分支，在运行 merge 命令时所切换到的分支）中的内容。下半部分是在 iss53 分支中的内容。解决冲突的办法无非是二者选其一或者由你亲自整合到一起。
-最后 尖括号和等号 这些行是需要手动删除的。下面是选其一的方式解决冲突</p>
-
-<p>运行 git add 将把它们标记为已解决状态 ，再运行一次 git status 来确认所有冲突都已解决，就可以提交了。</p>
-
-<p>  （4）长期分支理解</p>
-
-<p>   master 分支中保留完全稳定的代码，即已经发布或即将发布的代码。 develop 或 next 的平行分支，专门用于后续的开发。一旦进入某种稳定状态，便可以把它合并到 master 里。
-     下面是书本上的一个例子，起先我们在 master 工作到 C1，然后开始一个新分支 iss91 尝试修复 91 号缺陷，提交到 C6 的时候，又冒出一个解决该问题的新办法，于是从之前 C4 的地方又分出一个分支 iss91v2，干到 C8 的时候，又回到主干 master 中提交了 C9 和 C10，再回到iss91v2 继续工作，提交 C11，接着，又冒出个不太确定的想法，从 master 的最新提交 C10 处开了个新的分支 dumbidea 做些试验。</p>
-
-<p>   对于从之前 C4 的地方又分出一个分支 iss91v2，我一直都不太明白，是怎么回到分支的某个commit的。原来git还有一个很高级的命令
-<a href="http://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000/0013744142037508cf42e51debf49668810645e02887691000">http://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000/0013744142037508cf42e51debf49668810645e02887691000</a></p>
-
-<p> （5）版本回退命令
-   git reset &ndash;hard HEAD^
- 因为Git必须知道当前版本是哪个版本，在Git中，用HEAD表示当前版本，也就是最新的提交（通过git log／git log &ndash;pretty=oneline），
-可以查看提交的commit号。上一个版本就是HEAD^，上上一个版本就是HEAD^^，当然往上100个版本写100个^比较容易数不过来，所以写成HEAD~100。
-回退到相应版本之后，查看相应文件，就会发现也会回到之前修改的状态。通过git log查看版本库也会发现。回退版本之前的版本都没有了。
-      1、如果想回到之前最新的版本，怎么办，
-只要命令行终端没有关闭，找到之前git log查看的相应版本的commitid，然后使用下面的命令即可
-git reset &ndash;hard 命令号（取前几位就可以了），然后再查看相应文件，发现又回到最新的了。
-2、如果关闭电脑，关闭命令行终端后，想回到之前最新的版本，怎么办
-使用git reflog  就可以查看每一次命令的记录，然后就可以找到相应版本的commitid号</p>
-
-<p>   总结
-   HEAD指向的版本就是当前版本，因此，Git允许我们在版本的历史之间穿梭，使用命令git reset &ndash;hard commit_id。
-穿梭前，用git log可以查看提交历史，以便确定要回退到哪个版本。
-要重返未来，用git reflog查看命令历史，以便确定要回到未来的哪个版本。</p>
-
-<p>5、远程分支的理解和使用
-远程分支的表示形式： (远程仓库名)/(分支名)
-通过下面的图对远程分支和本地分支进行一个对比，同时与远程仓库和本地仓库的概念区分开。</p>
-
-<p>5、创建远程分支方法
-      （1）我是在本地执行如下命令时，git push origin master:new-remote-branch，如果远程没有一个名为new-remote-branch的分支，系统就会自动创建一个origin/new-remote-branch的远程分支了。
-git push (远程仓库名)  (本地分支名) : (远程分支名)
- （可以将本地的某个分支提交到远程的任意一个分支，这个分支就默认跟踪了这个远程分支），
-➜  gcdTestForGit git:(master) git push origin master:new-remote-branch
-Counting objects: 4, done.
-Delta compression using up to 8 threads.
-Compressing objects: 100% (3/3), done.
-Writing objects: 100% (4/4), 353 bytes | 0 bytes/s, done.
-Total 4 (delta 2), reused 0 (delta 0)
-remote:
-remote: Create pull request for new-remote-branch:
-remote:   git分支
-remote:
-To git地址
- * [new branch]      master -> new-remote-branch
-➜  gcdTestForGit git:(master)
-   （2）跟踪某个远程分支 方法：  从远程分支 checkout 出对应的本地分支，即相当于在本地创建一个与远程一样的分支，进行跟踪
-      创建方式：
-      git checkout -b master origin/master   ／／从远程分支新建并切换到master 本地分支，其内容同远程分支 origin/master 一致，这样你就可以在里面继续开发了   。其实这些在git clone  的时候git都给我们做好了。但是如果是其他git add 的远程分支，我们就需要手动去做这些操作。
-➜  gcdTestForGit git:(master) git checkout -b test-link-remote origin/new-remote-branch<br/>
-Branch test-link-remote set up to track remote branch new-remote-branch from origin.
-Switched to a new branch &lsquo;test-link-remote&rsquo;
-➜  gcdTestForGit git:(test-link-remote)
-      git checkout &ndash;track origin/master    ／／1.6.2 以上版本的 Git，对上面第一种创建方式进行简化。要为本地分支设定不同于远程分支的名字，就使用第一种方式换个名字即可。
-      作用：1、跟踪分支里输入 git push，Git 会自行推断应该向哪个服务器的哪个分支推送数据。
-           2、同样，在这些分支里运行 git pull 会获取所有远程索引，并把它们的数据都合并到本地分支中来。
-      注意：如果要在特定的远程分支中工作，提交数据，必须先按照上面的方式在本地先跟踪这个分支（比如development分支），然后在这个本地分支下再新建分支（如bugfix/mybranch，进行操作，完成后提交到远程的bugfix/mybranch分支，最后在远程合并到development分支
-     实例操作：
-      我们可以通过创建很多个本地分支来追踪某个远程分支。然后每次push，都自动提交到这个远程分支下。最后master分支可以将远程分支合并。
-如下图所示。
-test2-link-remote和test-link-remote是跟踪远程分支origin／new-remote-branch 的两个本地分支。当本地分支test2-link-remote   push到跟踪的远程分支上时，会提示本地分支test-link-remote落后远程分支一个版本，</p>
-
-<p>这时可以切换到test-link-remote分支下，执行pull操作，就可以保持他们一致，如下图所示：</p>
-
-<p>合并两个远程分支
-如上面例子所示：合并origin/master   与  origin/new-remote-branch .解决相应冲突即可(解决冲突的方法见上面）
-➜  gcdTestForGit git:(master) git merge origin/new-remote-branch
-Auto-merging gcdTestForGit/test1.txt
-CONFLICT (content): Merge conflict in gcdTestForGit/test1.txt
-Auto-merging gcdTestForGit/test.txt
-CONFLICT (content): Merge conflict in gcdTestForGit/test.txt
-Automatic merge failed; fix conflicts and then commit the result.
-➜  gcdTestForGit git:(master) ✗
-具体解决冲突如下：
-➜  gcdTestForGit git:(master) ✗ git status
-On branch master
-Your branch is up-to-date with &lsquo;origin/master&rsquo;.
-You have unmerged paths.
-  (fix conflicts and run &ldquo;git commit&rdquo;)</p>
-
-<p>Unmerged paths:
-  (use &ldquo;git add <file>&hellip;&rdquo; to mark resolution)</p>
-
-<p> both modified:   test.txt
- both modified:   test1.txt</p>
-
-<p>no changes added to commit (use &ldquo;git add&rdquo; and/or &ldquo;git commit -a&rdquo;)
-➜  gcdTestForGit git:(master) ✗ vim test.txt
-➜  gcdTestForGit git:(master) ✗ vim test1.txt
-➜  gcdTestForGit git:(master) ✗ git status
-On branch master
-Your branch is up-to-date with &lsquo;origin/master&rsquo;.
-You have unmerged paths.
-  (fix conflicts and run &ldquo;git commit&rdquo;)</p>
-
-<p>Unmerged paths:
-  (use &ldquo;git add <file>&hellip;&rdquo; to mark resolution)</p>
-
-<p> both modified:   test.txt
- both modified:   test1.txt</p>
-
-<p>no changes added to commit (use &ldquo;git add&rdquo; and/or &ldquo;git commit -a&rdquo;)
-➜  gcdTestForGit git:(master) ✗ git add .
-➜  gcdTestForGit git:(master) ✗ git status
-On branch master
-Your branch is up-to-date with &lsquo;origin/master&rsquo;.
-All conflicts fixed but you are still merging.
-  (use &ldquo;git commit&rdquo; to conclude merge)</p>
-
-<p>Changes to be committed:</p>
-
-<p> modified:   test.txt
- modified:   test1.txt</p>
-
-<p>➜  gcdTestForGit git:(master) ✗ git commit -m &lsquo;submit-git-test-10&rsquo;
-[master 95552e2] submit-git-test-10
-➜  gcdTestForGit git:(master) gi status
-zsh: command not found: gi
-➜  gcdTestForGit git:(master) git status
-On branch master
-Your branch is ahead of &lsquo;origin/master&rsquo; by 3 commits.
-  (use &ldquo;git push&rdquo; to publish your local commits)
-nothing to commit, working directory clean
-➜  gcdTestForGit git:(master) git push origin master
-Counting objects: 5, done.
-Delta compression using up to 8 threads.
-Compressing objects: 100% (5/5), done.
-Writing objects: 100% (5/5), 545 bytes | 0 bytes/s, done.
-Total 5 (delta 2), reused 0 (delta 0)
-To git分支  master -> master
-➜  gcdTestForGit git:(master)
-远程分支合并后的结果如下：</p>
-
-<p>删除远程分支
-git push [远程名] :[分支名]    ／／其实它是省略了《git push [远程名] [本地分支]:[远程分支]》命令中的本地分支。即提取一个空白的本地分支到远程分支。所有一定要注意这个两个命令的区别。使用git push命令做提交操作时一定要注意，如果写了（：），一定要加本地分支名</p>
-
-<p>问题：如果某个本地分支没有与远程分支关联，（在master分支下，好像默认跟踪的master，还是），可以push到别的远程仓库吗？
-如下：在master下创建一个分支，在本地做修改并且做了commit提交，但是没有push。
-然后把它push到别的远程分支会是什么情况？
-➜  gcdTestForGit git:(test-local-branch) git push origin test-local-branch:new-remote-branch
-Counting objects: 4, done.
-Delta compression using up to 8 threads.
-Compressing objects: 100% (4/4), done.
-Writing objects: 100% (4/4), 363 bytes | 0 bytes/s, done.
-Total 4 (delta 3), reused 0 (delta 0)
-remote:
-remote: Create pull request for new-remote-branch:
-remote:   git分支
-remote:
-To git地址
-   103f55f..852a6ea  test-local-branch -> new-remote-branch
-➜  gcdTestForGit git:(test-local-branch)
-结果：test-local-branch分支变成了跟踪new-remote-branch远程分支的一个本地分支
-并且切换到远程分支new-remote-branch中，可以看到在本地test-local-branch分支中做的修改，说明push成功了。
-结论：在本地创建一个分支的时候，（跟踪某个远程分支的作用是可以fetch／pull这个远程分支的数据，不跟踪貌似也能拉取它的数据，所以我觉得本地分支和远程分支在push之前好像没有很大联系），在push操作之前，一定要对远程分支进行fetch／pull的操作拉取新的更新数据，然后push。
-好像push fetch pull的时候都不会出现冲突（push就是把本地的覆盖远程的，fetch／pull远程覆盖本地的），只有merge的时候才会有冲突。</p>
-
-<p>所以在做项目时应该是每个人创建属于自己的远程分支（所以push都只覆盖自己），然后某个人去把这个远程分支进行merge时再去解决冲突。最后可能就把merge后的分支再与主远程分支merge
-下面这篇博客讲了多人协作开发中git在不同场景下的使用，可以多看看，多试着练习一下，博客最后有人提了一个问题，其实也是我不太懂的。就是怎么建远程分支，好像我前面都是建本地分支时设置一个远程分支，然后就自动生成， 问了一下我们项目时开一个task的时候，可以在那个网页上建远程分支就可以了。
-<a href="http://limboy.me/tech/2011/02/25/git-workflow-with-blog-demo.html">http://limboy.me/tech/2011/02/25/git-workflow-with-blog-demo.html</a></p>
-
-<p>下面是我做的一次练习测试，加深我对git多人协作开发流程的理解</p>
-
-<p>在当前分支下，提交多次。并且push到对应的远程分支</p>
-
-<p>git:(new-remote-branch) git push origin new-remote-branch。结果如下所示</p>
-
-<p>然后利用版本回退，回到前面的第二个commit
-git:(new-remote-branch) git reset &ndash;hard HEAD~2</p>
-
-<p>此时还会提示你要git pull远程上的commit，但是你想把前面的两个commit都删除。</p>
-
-<p>➜  gcdTestForGit git:(new-remote-branch) git status
-On branch new-remote-branch
-Your branch is behind &lsquo;origin/new-remote-branch&rsquo; by 2 commits, and can be fast-forwarded.
-  (use &ldquo;git pull&rdquo; to update your local branch)
-nothing to commit, working directory clean</p>
-
-<p>这时又在这里做了多次commit。即出现分支的分化（分叉），直接push的话，git会默认对这些分支进行一个merge。如果有冲突就会出现错误，不知道是不是的。</p>
-
-<p>➜  gcdTestForGit git:(new-remote-branch) vim test1.txt
-➜  gcdTestForGit git:(new-remote-branch) ✗ git add .
-➜  gcdTestForGit git:(new-remote-branch) ✗ git commit -m &lsquo;submit-08-14-06&rsquo;
-[new-remote-branch cfb560b] submit-08-14-06
- 1 file changed, 1 insertion(+), 1 deletion(-)</p>
-
-<p>如下图所示</p>
-
-<p>再做一次和前面一样的commit操作，得到如下</p>
-
-<p>其实上面的图显示的告诉你，可以git merge来合并。但是如果我直接push的话，看一下会出现什么结果.果然出错了。</p>
-
-<p>➜  gcdTestForGit git:(new-remote-branch) git push origin new-remote-branch
-To git地址
- ! [rejected]        new-remote-branch -> new-remote-branch (non-fast-forward)
-error: failed to push some refs to &lsquo;git地址&rsquo;
-hint: Updates were rejected because the tip of your current branch is behind
-hint: its remote counterpart. Integrate the remote changes (e.g.
-hint: &lsquo;git pull &hellip;&rsquo;) before pushing again.
-hint: See the &lsquo;Note about fast-forwards&rsquo; in &lsquo;git push &ndash;help&rsquo; for details.</p>
-
-<p>然后运行git status，提示你要先pull</p>
-
-<p>➜  gcdTestForGit git:(new-remote-branch) git status
-On branch new-remote-branch
-Your branch and &lsquo;origin/new-remote-branch&rsquo; have diverged,
-and have 2 and 2 different commits each, respectively.
-  (use &ldquo;git pull&rdquo; to merge the remote branch into yours)
-nothing to commit, working directory clean
-git pull之后就会告诉你有哪些冲突，然后解决冲突后就可以了。</p>
-
-<p>➜  gcdTestForGit git:(new-remote-branch) git pull
-Auto-merging gcdTestForGit/test1.txt
-CONFLICT (content): Merge conflict in gcdTestForGit/test1.txt
-Automatic merge failed; fix conflicts and then commit the result.</p>
-
-<p>最后解决冲突，然后commit push之后，就可以了</p>
-
-<p>➜  gcdTestForGit git:(new-remote-branch) ✗ vim test1.txt
-➜  gcdTestForGit git:(new-remote-branch) ✗ git add .
-➜  gcdTestForGit git:(new-remote-branch) ✗ git commit -m &lsquo;submit-08-14-08&rsquo;
-[new-remote-branch 3dd204d] submit-08-14-08
-➜  gcdTestForGit git:(new-remote-branch) git push origin new-remote-branch
-Counting objects: 12, done.
-Delta compression using up to 8 threads.
-Compressing objects: 100% (12/12), done.
-Writing objects: 100% (12/12), 1.00 KiB | 0 bytes/s, done.
-Total 12 (delta 9), reused 0 (delta 0)
-remote:
-remote: Create pull request for new-remote-branch:
-remote:   git分支
-remote:
-To git地址
-   c66c1bc..3dd204d  new-remote-branch -> new-remote-branch</p>
-
-<p>但是如果想强制将分叉本地分支覆盖掉远程分支上。而submit－08-14-04和submit－08-14－05两次commit的操作都删除的话，使用git push origin new-remote-branch。即加一个－f的参数。就可以不记性pull然后解决冲突了。</p>
-
-<p>总结：通过上面的实验，让我明白了在一个分支上一直commit push的话，直接覆盖前面的。只有当在这个分支上（如回退到某个分岔点）出现分岔的时候才需要merge等的操作，就可能需要解决冲突。所以很多人在一个远程分支上工作的时候。一般如果有人push了，则你在本地想要push
-的时候，先运行git status，一般就会告诉你先git pull，然后如果没有冲突你再push就可以了。如果是你一个人在远程分支上工作貌似就没关系。</p>
-
-<p>git rebase的理解：修改当前分支的基底分支，在基底分支上重演一遍分支中所做的修改，这个命令执行后不会出现马上要解决冲突，因为它还是生成了一个分支，只有从新的基底分支merge这个分支的时候才可能出现要解决冲突。</p>
-
-<p>［第一部分］
-<a href="http://blog.csdn.net/u010520912/article/details/18993001">http://blog.csdn.net/u010520912/article/details/18993001</a>
-创建github账号及上传代码的步骤
-github账号地址
-<a href="https://github.com/amyliangfang/lf/blob/master/c-01/c-01">https://github.com/amyliangfang/lf/blob/master/c-01/c-01</a>
-具体步骤：
-注册github账号－使用ssh密钥认证－创建本地仓库并上传代码到github</p>
-
-<p>参考书籍：
-<a href="http://git-scm.com/book/en/v2">http://git-scm.com/book/en/v2</a></p>
-
-<p><a href="http://pcottle.github.io/learnGitBranching/">http://pcottle.github.io/learnGitBranching/</a></p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
+    
+      <a class="prev" href="/posts/2">&larr; Older</a>
     
     <a href="/blog/archives">Blog Archives</a>
     
@@ -2064,6 +1934,10 @@ github账号地址
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/02/18/reactive-cocoaxue-xi-bi-ji/">Reactive Cocoa学习笔记</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2016/01/01/swift-xue-xi-zong-jie/">Swift 学习总结</a>
@@ -2079,10 +1953,6 @@ github账号地址
     
       <li class="post">
         <a href="/blog/2015/11/14/ocdan-yuan-ce-shi/">OC单元测试</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/09/20/mvvmkuang-jia-xue-xi-shi-jian/">MVVM框架学习实践</a>
       </li>
     
   </ul>
