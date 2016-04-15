@@ -4,7 +4,7 @@
   <title><![CDATA[My Octopress Blog]]></title>
   <link href="http://amazinglf.github.io/atom.xml" rel="self"/>
   <link href="http://amazinglf.github.io/"/>
-  <updated>2016-04-15T11:50:08+08:00</updated>
+  <updated>2016-04-15T11:52:23+08:00</updated>
   <id>http://amazinglf.github.io/</id>
   <author>
     <name><![CDATA[Your Name]]></name>
@@ -14,10 +14,30 @@
 
   
   <entry>
+    <title type="html"><![CDATA[Swift 学习总结]]></title>
+    <link href="http://amazinglf.github.io/blog/2016/01/01/swift-xue-xi-zong-jie/"/>
+    <updated>2016-01-01T14:33:03+08:00</updated>
+    <id>http://amazinglf.github.io/blog/2016/01/01/swift-xue-xi-zong-jie</id>
+    <content type="html"><![CDATA[<p>Swift学习之基础部分
+常量和变量,主要掌握根据它们使用的场景，对不会变化的值使用常量，对不断变化的值使用变量。</p>
+
+<p>注释：单行注释使用//，多行注释使用/<em>  </em>/，对于多行注释还可以使用嵌套。</p>
+
+<p>分号：Swift中可以省略分号，如果在同一行有多条语句，需要用分号隔开。</p>
+
+<p>整数：Int UInt 可以通过它的最大值、最小值属性获取它表示的范围。</p>
+
+<p>浮点数：带有小数点的数据类型，Float Double。</p>
+
+<p>类型安全和类型推断：Swift会在编译的时候对代码进行类型检查，把不匹配的类型标记为错误。如果给变量或常量赋了初始值的时候，可以不申明类型，由系统进行类型推断。</p>
+]]></content>
+  </entry>
+  
+  <entry>
     <title type="html"><![CDATA[Git 学习笔记]]></title>
-    <link href="http://amazinglf.github.io/blog/2016/04/15/git-xue-xi-bi-ji/"/>
-    <updated>2016-04-15T11:09:27+08:00</updated>
-    <id>http://amazinglf.github.io/blog/2016/04/15/git-xue-xi-bi-ji</id>
+    <link href="http://amazinglf.github.io/blog/2015/04/15/git-xue-xi-bi-ji/"/>
+    <updated>2015-04-15T11:09:27+08:00</updated>
+    <id>http://amazinglf.github.io/blog/2015/04/15/git-xue-xi-bi-ji</id>
     <content type="html"><![CDATA[<p>1、理解git在本地常用的操作
         （1）git status命令的作用，即从查看本地仓库中出现了的修改和变化的角度去想，如添加、修改和删除文件的操作。比较常见的就是添加新的文件和修改仓库中的某个文件。该命令方便我们查看我们在本地所做的一些修改。 <br/>
         （2）git本地操作的三个区域<br/>
@@ -345,26 +365,6 @@ github账号地址
 <a href="http://git-scm.com/book/en/v2">http://git-scm.com/book/en/v2</a></p>
 
 <p><a href="http://pcottle.github.io/learnGitBranching/">http://pcottle.github.io/learnGitBranching/</a></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Swift 学习总结]]></title>
-    <link href="http://amazinglf.github.io/blog/2016/01/01/swift-xue-xi-zong-jie/"/>
-    <updated>2016-01-01T14:33:03+08:00</updated>
-    <id>http://amazinglf.github.io/blog/2016/01/01/swift-xue-xi-zong-jie</id>
-    <content type="html"><![CDATA[<p>Swift学习之基础部分
-常量和变量,主要掌握根据它们使用的场景，对不会变化的值使用常量，对不断变化的值使用变量。</p>
-
-<p>注释：单行注释使用//，多行注释使用/<em>  </em>/，对于多行注释还可以使用嵌套。</p>
-
-<p>分号：Swift中可以省略分号，如果在同一行有多条语句，需要用分号隔开。</p>
-
-<p>整数：Int UInt 可以通过它的最大值、最小值属性获取它表示的范围。</p>
-
-<p>浮点数：带有小数点的数据类型，Float Double。</p>
-
-<p>类型安全和类型推断：Swift会在编译的时候对代码进行类型检查，把不匹配的类型标记为错误。如果给变量或常量赋了初始值的时候，可以不申明类型，由系统进行类型推断。</p>
 ]]></content>
   </entry>
   
