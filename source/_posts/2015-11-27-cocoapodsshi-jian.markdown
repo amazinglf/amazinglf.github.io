@@ -1,0 +1,106 @@
+---
+layout: post
+title: "CocoaPods实践"
+date: 2015-11-27 18:26:33 +0800
+comments: true
+categories: 
+---
+
+1、cocoapods概念
+
+       用来方便的统一管理项目中引用的第三方库的工具，它的原理是将所有第三方的依赖库放到https://github.com/CocoaPods/Specs远程仓库的pods项目中，让使用cocoapods的项目依赖这 个pods 项目来管理它所引用的第三方库，即使用这个工具将本地项目对第三方库管理的职责转移出去。
+2、cocoapods安装和使用
+
+    安装常用命令如下：
+    ruby -v    //查看当前ruby的版本
+    sudo gem update --system //升级gem
+    gem sources -l    //查看ruby镜像的位置，看是否指向http://   ruby.taobao.org/，具体原因可打开链接
+    sudo gem install cocoapods   //下载安装CocoaPods
+    pod setup
+ 
+     
+    使用方法：
+      （1）终端中，cd到项目总目录，创建podfile文件，指定项目需要依赖的第三方库
+      （2）使用pod search <>命令,可以预先查找自己需要的第三方库资源
+      （3）创建好podfile文件后，执行pod install ／pod install --verbose命令，执行安装第三方库的操作。如果前面命令的执行速度非常慢，可以使用pod install --verbose --no-repo-update命令替 换，该命令的作用是不把cocoapods远程仓库上的podspec索引文件更新到本地
+       (4)  命令执行成功之后，会生成几个新的文件，一定要注意先关闭xcode，此时需要直接打开新生成的.xcworkspace来打开项目了，否则会报错
+      （5）如果修改了podfile文件，执行pod update命令即可
+
+3、podspec文件的作用
+
+      （1）cocoapods上所有第三方库的项目都对应有一个podspec文件，放置在https://github.com/CocoaPods/Specs仓库上，第一次执行pod setup时，就会将这个仓库上所有的这些podsepc索 引文件下载到本地的~/.cocoapods/目录下。
+      （2）我们也可以为自己的项目创建podspec文件，不放到cocoapods公有的远程仓库上，放到自己私有的某个git仓库上，只作为本地私有pods使用，创建好之后，其他项目就可以通过指定podspec文件信息来使用本地私有的公 共库，在podfile文件中，添加如下信息。  pod 'LfDemoCode', :podspec =>'http://git.XXX.com/users/liangfang/repos/testlf/LfDemoCode.podspec'
+      
+4、podfile.lock文件的作用
+
+      （1）该文件用于在多人协作开发中，锁定项目中各个依赖库的版本，如果有人多次执行pod install不会更改版本，但是执行pod update就修改podfile.lock文件了，因为，在多人协作开发时，会将 该文件纳入版本控制中，如果有人修改了这个文件，大家都可以同步。
+ 
+5、创建cocoapods私有库方法
+  
+       通过cocoapods创建自己的私有库，在公司内部供其他项目使用，首先需要具备如下条件：
+       
+      （1）创建一个私有的git远程仓库，类似于cocoapods的https://github.com/CocoaPods/Specs仓库，它的作用就是用于存放依赖库的podspec文件，称之为Spec Repo。然后在本地把这个仓库 添加为一个pod repo，在终端执行如下命令：
+       pod repo add LFSpecs ssh://git@git.XXX.com/~liangfang/lfspecs.git,其中LFSpecs是指定的私有repo的名字，命令执行成功后，就可以在本地的~/.cocoapods/repos目录 下，看到添加的这个repo的文件夹(这里还看不到文件夹下相应的podspec文件,因为还没有push相应文件)，其他人如果要共用这个repo上传他们的库文件的话，执行相同的命令即可，即也可以在本地push自己的podspec文件。
+       
+       （2）创建一个管理项目工程文件的版本控制地址，git仓库或者其他仓库地址都可以，用来存放依赖库实际代码的项目文件，方式一、使用自己已经创建好的现成的一个项目，push到这个版本 控制地址，方式二、使用pod提供的一个命令开始创建项目，如pod lib create LFPodTestLibrary，其中LFPodTestLibrary是指定的项目名字，然后再push到这个版本控制地址。这里主要考虑第一种方式的使用。具体步骤如下：
+       
+         第一步：在本地创建一个工程项目PracticeForPodProject，cd到这个工程目录下，执行git init，添加一个远程管理仓库，提交代码到这个仓库
+         git remote add origin ssh://git@git.XXX.com/~liangfang/customcreatepodproject.git
+         git push origin master 
+         这里需要注意的是要保证打开git网址直接打开工程项目的所有文件，不要在所有文件外面再包含一层文件夹，因为pod spec lint验证的时候会报找不到source file文件的错误。一开始我是先git clone远程仓库地址，然后在这个文件夹下创建新的工程文件，就会有一个以工程名命名的总文件夹，这样就出现上面一直验证不通过的问题。
+         
+        第二步：创建一个podfile文件，如下所示，添加一些第三方依赖，保存后执行pod install, 成功之后，把相关修改提交到仓库。使用下面的命令给这个项目添加一个tag号：git tag -m “first release”  0.0.1 ,然后使用命令 git push —tags 来推送tag到远程仓库。
+ 
+    source 'https://github.com/CocoaPods/Specs.git'
+    platform :ios, '9.0'
+    pod 'ReactiveCocoa', '~> 2.4.2'
+    pod 'Mantle', '~> 2.0.4'
+    pod 'SVProgressHUD-0.8.1', '~> 0.8'
+    pod 'Masonry', '~> 0.6.2'
+ 
+       第三步：给这个项目添加一个podspec文件，可使用如下命令进行创建：
+       pod spec create PracticeForPodProject git地址。
+       执行完后就创建了一个podsepc文件，指定git仓库地址,修改相关内容如下, 注意相关信息与前面定义的保持一致，在本地工程主目录下，创建Pod文件夹，以及Pod下的Classes Assets子文件夹，存放相关测试的.h .m 文件。同时从其他项目拷贝一个license文件和readme.md到当前工程主目录下。保存修改的podspec文件，将前面的所以修改先提交到远程仓库，尤其是添加的文件夹以及使用最新的tag号指向你提交到远程的最新版本，然后执行pod lib lint 以及 pod spec lint PracticeForPodProject.podspec .查看验证是否通过，可以加上--no-clean查看具体信息。
+       
+     Pod::Spec.new do |s|
+     s.name         = "PracticeForPodProject"
+     s.version      = "0.0.1"
+     s.summary      = "A test for PracticeForPodProject."
+     s.description  = <<-DESC
+                   A test  for PracticeForPodProject in Markdown format.
+                   DESC
+     s.homepage    = "http://git.XXX.com/users/liangfang/repos/customcreatepodproject/browse"
+      s.license      = "MIT"
+      s.author             = { "liangfang" => "liangfang@163.com" }
+      s.platform     = :ios, "9.0"
+      s.source       = { :git => "ssh://git@git.XXX.com/~liangfang/customcreatepodproject.git", :tag => "0.0.1" }
+      s.source_files  = "Pod/Classes/**/*.{h,m}"
+     end
+
+     第四步：在第三步podspec文件验证通过之后，要把所有修改提交到远程仓库，同时还要把podspec文件提交到远程的spec repo,使用如下命令：
+    pod repo push LFSpecs PracticeForPodProject.podspec //LFSpecs即为前面创建的repo的名字，文件内容中相关字段可参考http://guides.cocoapods.org/syntax/podspec.html#specification。
+     提交成功之后，就可以在本地~/.cocoapods/repos目录下以及LFSpecs对应的远程仓库上找到相应podspec文件。通过pod search PracticeForPodProject也可以找到相应工程信息。
+
+     第五步：修改本地的podfile加上如下语句，执行pod install，再重新打开项目工程，就可以看到前面创建的Pods/Classes/.h .m,已经存放到Pods工程的Development Pods/PracticeForPodProject目录下了。每次在Pods工程下新添加了文件，主要要提交到远程仓库。操作方式与前面类似，方便其他项目对他的依赖。
+ 
+      source 'ssh://git@git.XXX.com/~liangfang/lfspecs.git'
+      pod "PracticeForPodProject", :path => "PracticeForPodProject.podspec"
+ 
+ 
+       （3）下面在一个本地的其他项目中，来测试上面的项目是否可以通过cocoapods来使用，可通过在podfile文件中添加如下语句，如下所示：执行pod install ，再打开项目就可以在Pods工程中的Pods目录下找到依赖的本地的PracticeForPodProject工程
+ 
+    source 'ssh://git@git.XXX.com/~liangfang/lfspecs.git'
+    pod "PracticeForPodProject", :git => 'ssh://git@git.XXX.com/~liangfang/customcreatepodproject.git', :commit => 'd2804be542c'
+ 
+       （4） 在其他项目中也可以通过 pod ‘PracticeForPodProject’, ‘~>1.0’ 来直接添加了
+       （5）关于cocoapods的subspec属性的使用，后面再添加,如果修改了pod里面已存在的文件，不需要pod install，如果新添加了文件需要pod install.
+
+
+参考链接
+
+http://objccn.io/issue-6-4/
+http://guides.cocoapods.org/syntax/podfile.html
+http://www.cocoachina.com/ios/20150916/13384.html
+http://blog.wtlucky.com/blog/2015/02/26/create-private-podspec/
+http://blog.devtang.com/blog/2014/05/25/use-cocoapod-to-manage-ios-lib-dependency/
+https://guides.cocoapods.org/

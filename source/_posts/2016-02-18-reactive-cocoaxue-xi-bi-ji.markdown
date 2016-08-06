@@ -1,0 +1,180 @@
+---
+layout: post
+title: "Reactive Cocoa学习笔记"
+date: 2016-02-18 23:40:18 +0800
+comments: true
+categories: 
+---
+
+入门
+
+###一、信号RACSignal
+
+     单个信号的创建方式
+    （1）RACObserve观察成员变量值的信号，前提是该属性必须支持KVO
+    （2）RAC封装UI控件事件输入值变化传递的信号
+    （3）通过RACSignal类方法创建的信号
+    （4）将某个信号赋值给某个成员变量，也就是信号绑定
+    （5）对信号进行链式和过滤生成一个新的信号
+    
+     组合信号
+  
+     通过RACSignal的类方法combinelatest将上面的单个信号进行组合
+  
+      基本概念和用法
+  
+      信号的生命周期：RACSignal从创建到在block中发送sendNext sendCompleted.以及－对信号执行delay、等操作－被订阅者订阅subscribeNext subscribeCompleted的过程。类似于一个工厂，该工厂只有在消费者需要某个产品［somesignal subscribernext ］时，工厂才会去生产相应产品，即执行相应代码［subscriber sendnext：somedatat］，这样的信号被称为冷信号，还要一种热信号可以参考http://tech.meituan.com/tag/ReactiveCocoa#rd
+      
+      
+      创建自定义的RACSignal，实现方式，
+      Signal获取到数据后，会调用Subscriber的sendNext, sendComplete, sendError方法来传送数据给Subscriber，Subscriber自然也有方法来获取传过来的数据，如：[signal subscribeNext:error:completed]。可以这样理解，RACSignal需要传入一个实现RACSubscriber协议的类，并且会调用相应协议的方法sendNext...。而这些相应协议方法的实现在subscribeNext...等的block中，相当于subscribeNext...替换sendNext...协议方法的实现，改了一下方法名称，本质是在subscribeNext...封装的方法中对协议方法实现进行了一些处理。具体可参考后面的分析。
+      
+      注意这个方法带有三个参数这样只要没有sendComplete和sendError，新的值就会通过sendNext源源不断地传送过来，举个简单的例子：
+       RACSignal *signal = [RACSignal createSignal:^ RACDisposable * (id<RACSubscriber> subscriber) {
+    NSLog(@"triggered");
+    [subscriber sendNext:@"foobar"];
+    [subscriber sendCompleted];
+    return nil;
+    }];
+    
+    [RACObserve(self, username) subscribeNext: ^(NSString *newName){
+    NSLog(@"newName:%@", newName);
+    }];
+    
+     可以在上面的方法后直接添加error completed参数的block，也可以分开写，如下所示：
+     [signal subscribeCompleted:^{
+    NSLog(@"subscription %u", subscriptions);
+     }];
+     
+        如果有多个subscriber的订阅者，那么signal就会又一次被触发，控制台里会输出两次triggered。这或许是你想要的，或许不是。如果要避免这种情况的发生，可以使用 replay 方法，它的作用是保证signal只被触发一次，然后把sendNext的value存起来，下次再有新的subscriber时，直接发送缓存的数据。 并且当一个信号存在多个订阅者时，也有可能产生的副作用。譬如，在一个block中修改外面的__block变量的值，会对后面的订阅者获取到的这个值产生影响。
+
+###二、相关实例代码
+
+
+    // KVO
+    [RACObserve(self, username) subscribeNext:^(id x) {
+    NSLog(@" 成员变量 username 被修改成了：%@", x);}];
+    // target-action
+    self.button.rac_command = [[RACCommand alloc] initWithSignalBlock:^RACSignal *(id input) {
+     NSLog(@" 按钮被点击 ");
+     return [RACSignal empty];}];
+     // Notification
+     [[[NSNotificationCenter defaultCenter]rac_addObserverForName:UIKeyboardDidChangeFrameNotificationobject:nil]subscribeNext:^(id x) {
+     NSLog(@" 键盘 Frame 改变 ");}];
+     // Delegate
+     [[self rac_signalForSelector:@selector(viewWillAppear:)] subscribeNext:^(id x) {
+     debugLog(@"viewWillAppear 方法被调用 %@", x);}];
+
+
+注意事项：
+
+    （1）RACObserve使用了KVO来监听property的变化，只要username被自己或外部改变，block就会被执行。但不是所有的property都可以被RACObserve，该property必须支持KVO，比如NSURLCache的currentDiskUsage就不能被RACObserve
+    
+    （2）rac_textSignal是RAC为UITextField添加的category，只要usernameTextField的值有变化，这个值就会被返回(sendNext)。combineLatest需要每个signal至少都有过一次sendNext
+    
+     （3）UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"" message:@"Alert" delegate:nil cancelButtonTitle:@"YES" otherButtonTitles:@"NO", nil]; 
+     [[alertView rac_buttonClickedSignal] subscribeNext:^(NSNumber *indexNumber) {     
+      if ([indexNumber intValue] == 1) {         
+         NSLog(@"you touched NO");     
+       } else {         
+         NSLog(@"you touched YES");     
+      } }]; 
+      [alertView show];
+      
+     （4）有了这些Category，大部分的Delegate都可以使用RAC来做。或许你会想，可不可以subscribe NSMutableArray.rac_sequence.signal，这样每次有新的object或旧的object被移除时都能知道，UITableViewController就可以根据dataSource的变化，来reloadData。但很可惜这样不行，因为RAC是基于KVO的，而NSMutableArray并不会在调用addObject或removeObject时发送通知，所以不可行。不过可以使用NSArray作为UITableView的dataSource，只要dataSource有变动就换成新的Array，这样就可以了。
+     
+     （5）说到UITableView，再说一下UITableViewCell，RAC给UITableViewCell提供了一个方法：rac_prepareForReuseSignal，它的作用是当Cell即将要被重用时，告诉Cell。想象Cell上有多个button，Cell在初始化时给每个button都addTarget:action:forControlEvents，被重用时需要先移除这些target，下面这段代码就可以很方便地解决这个问题：
+     [[[self.cancelButton
+    rac_signalForControlEvents:UIControlEventTouchUpInside]
+    takeUntil:self.rac_prepareForReuseSignal]
+    subscribeNext:^(UIButton *x) {
+    // do other things
+    }];
+
+###三、RACTurple RACStream RACSubject  RACScheduler RACSubscriber
+
+      （1）在Objc下，输入输出的“值”都可以用id类型，遇到多个值的组合就用RACTurple
+      （2）  RACStream作为一个描述抽象的父类，它定义的几个基本方法自己并没有实现，是由具体子类来实现，RACStream的两个子类分别是RACSignal和RACSequence，可以对应到下面的图进行理解。
+      （3）RACSubject(继承自RACSignal，可以理解为自由度更高的signal)。比如一个异步网络操作，可以返回一个subject，然后将这个subject绑定到一个subscriber或另一个信号。
+       - (void)doTest
+    {
+    RACSubject *subject = [self doRequest];
+    
+    [subject subscribeNext:^(NSString *value){
+        NSLog(@"value:%@", value);
+    }];
+    }
+ 
+      - (RACSubject *)doRequest
+     {
+    RACSubject *subject = [RACSubject subject];
+    // 模拟2秒后得到请求内容
+    // 只触发1次
+    // 尽管subscribeNext什么也没做，但如果没有的话map是不会执行的
+    // subscribeNext就是定义了一个接收体
+    [[[[RACSignal interval:2] take:1] map:^id(id _){
+        // the value is from url request
+        NSString *value = @"content fetched from web";
+        [subject sendNext:value];
+        return nil;
+    }] subscribeNext:^(id _){}];
+    return subject;
+     }
+     
+     （4）对RACScheduler作用的理解，先 通过下面的文字了解了它的作用，还没有写具体代码
+     RACScheduler是RAC里面对线程的简单封装，事件可以在指定的scheduler上分发和执行，不特殊指定的话，事件的分发和执行都在一个默认的后台线程里面做，大多数情况也就不用动了，有一些特殊的signal必须在主线程调用，使用-deliverOn：可以切换调用的线程。
+    订阅者执行时的block一定非并发执行，也就是说不会执行到一半被另一个线程进入，也意味着写subscribeXXX block的时候没必要做加锁处理            However, RAC guarantees that no two signal events will ever arrive concurrently. While an event is being processed, no other events will be delivered. The senders of any other events will be forced to wait until the current event has been handled.
+    
+     (5) RACSubscriber是定义的一个协议，参照博客http://nathanli.cn/2015/08/27/reactivecocoa2-%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/的内容，对它理解的更加深入，自己总结如下：
+      RACSubscriber协议定义了sendNext sendError sendCompleted 等方法，首先明白协议使用的两个条件：1 有类实现了协议的方法 2 其他类中定义了协议对象，调用了协议的方法。在源码中的体现就是RACSignal里面（创建方法等方法中）封装了对这个协议方法的调用，在RACSignal的订阅方法subscriber中传入一个实现了协议方法RACSubscriber的对象。即外部要订阅这个信号就必须实现RACSubscriber协议中的方法，实际就是对订阅的值进行处理（在一层协议方法中在嵌套一层协议方法）。  其次源码对实现协议中方法的对象进行了一些封装，将协议方法的实现转化为block。更进一步将前面封装的block实现的类作为RACSignal的一个分类方法，这样对外部隐藏RACSubscriber，直接对订阅值value进行一些处理。
+      
+       - (void)nl_subscribeNext:(void (^)(id x))nextBlock error:(void (^)(NSError *error))errorBlock completed:(void (^)(void))completedBlock {
+       NLSubscriber *subscriber = [NLSubscriber subscriberWithNext:nextBlock error:errorBlock completed:completedBlock];
+      [self subscribe:subscriber];
+     }
+
+       前面的分析只是明白了 RACSignal内部给我们封装好了 RACSubscriber这个协议的使用，还应该要明白 RACSignal它最重要的方法 [self subscribe:subscriber];的实现细节。可以在源码里面看看下面这个方法试的实现细节
+      @interface RACSignal (Subscription)
+      /*
+      *  `subscriber` 订阅 receiver 的变化。由 receiver 决定          怎么给 subscriber 发送事件。
+      *简单来说，就是由这个被订阅的信号来给订阅者 subscriber 发送 `sendNext:` 等消息。*/
+       - (RACDisposable *)subscribe:(id<RACSubscriber>)subscriber;
+       @end
+       
+       在博客中完全从订阅者RACSubscriber （即先不考虑信号是怎么发送的）以及 设计模式的角度详细描述了它的实现过程，如下
+       （1）定义了一个协议RACSubscriber ，申明它的三个方法sendNext sendError sendCompleted。定义一个实现这个协议方法的具体类，如NLSubscriber
+       （2）在RACSignal的分类 (Subscription)中，定义一个subscribe方法，需要传入一个实现了RACSubscriber协议的类。如上面方框中代码所示。
+       
+        通过上面两步，我们就可以简单的定义一个RACSignal 一个NLSubscriber，并且把NLSubscriber传给RACSignal分类 (Subscription)中的subscribe方法。
+       但是这样有一个问题就是，如果有多个订阅者，每个订阅者都要创建一个类，实现RACSubscriber协议以及协议的方法。因为每个订阅者的实现方法有很多种，很难实现复用。对于在某些场景中，譬如某个算法的实现，它的实现方式只可能是固定的几种方式（或者说几种策略，可称为策略模式），我们可以通过这种方式去实现，但是对于多个订阅者的实现方式不能复用的情况，用上面的方法就不是很好。解决办法是使用block，将协议的实现方法用block来代替。
+       
+
+上面的实现类似策略模式，下面类似适配器模式。
+
+
+      （1）定义一个实现RACSubscriber协议的通用类，在这个通用类中，定义与协议方法实现相关的block，并且作为这个通用类的属性，在通用类的初始化方法中给这些block属性传值，同时在协议方法实现中去执行这些block。
+       这样，我们可以通过定义一个RACSignal，一个通过block初始化的通用类，将这个通用类传入RACSignal分类 (Subscription)中的subscribe方法。这样实现通过block的方式去定义i 不同的实现，而不需要去定义多个不同的类去实现了。
+       源码中在上面的基础之上，将通用类的初始化，以及传给subscribe方法的过程封装到了RACSignal的一个分类方法中，只需要在参数定义中把对应的block传递过去即可。对于用户来说只需要创建RACSignal对象，调用它的sendNext...等方法，同时调用subscribeNext...等方法完成前面调用方法的具体实现。并且后面有实现的情况下触发前面的调用，与这个相关的实现细节应该在RACSignal源码的具体实现中去分析。
+
+###四、注意事项
+
+      （1）RAC 在应用中大量使用了 block，由于 Objective-C 语言的内存管理是基于 引用计数的，为了避免循环引用问题，在 block 中如果要引用 self，需要使用@weakify(self)和@strongify(self)来避免强引用。另外，在使用时应该注意 block 的嵌套层数，不恰当的滥用多层嵌套 block 可能给程序的可维护性带来灾难。
+      （2）RAC在使用时有一些注意事项，可以参考官方的DesignGuildLines。
+      （3）当一个signal被一个subscriber subscribe后，这个subscriber何时会被移除？答案是当subscriber被sendComplete或sendError时，或者手动调用[disposable dispose]。当subscriber被dispose后，所有该subscriber相关的工作都会被停止或取消，如http请求，资源也会被释放。
+      （4）Signal events是线性的，不会出现并发的情况，除非显示地指定Scheduler。所以-subscribeNext:error:completed:里的block不需要锁定或者synchronized等操作，其他的events会依次排队，直到block处理完成。
+      （5）Errors有优先权，如果有多个signals被同时监听，只要其中一个signal sendError，那么error就会立刻被传送给subscriber，并导致signals终止执行。相当于Exception。生成Signal时，最好指定Name, -setNameWithFormat: 方便调试。
+      （6）block代码中不要阻塞。
+http://limboy.me/
+http://blog.sunnyxx.com/tags/Reactive%20Cocoa%20Tutorial/
+
+进阶
+
+###一、RAC原理
+
+       关于原理性的知识应该在一开始学习的时候就要深刻理解的， 但是刚开始学总会好高骛远，总想着马上就会用了，其实虽然学会了一些简单的用法了，一到比较难的知识点理解起来就比较困难了，就是因为一开始没有理解它的根本原理。下面是经过RAC培训之后自己的总结。
+       
+       RAC来源于FRP（函数式响应式编程）思想：随时间变化的数据流在这个思想的基础上还有ReactiveX By Microsoft，它的一些基本操作与RAC也是比较类似的，http://rxmarbles.com/ 
+ 
+       而RAC是通过订阅者的方式来控制数据流的开始时间点，结束时间点，并且通过一些方式对随时间变化的数据流做一些控制（过滤，整合等）。
+       
+       比较常见的一种场景，对网络请求返回数据的订阅，如果是冷信号，会导致网络请求数据的操作执行多次，而如果是热信号，可能会产生一定的副作用或者数据不一致，感觉在这种有网络请求的场景下使用信号要特别注意。如何正确的使用它，防止它不犯错误。

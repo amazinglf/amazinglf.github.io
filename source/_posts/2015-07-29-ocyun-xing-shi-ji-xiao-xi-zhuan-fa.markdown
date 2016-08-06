@@ -1,0 +1,94 @@
+---
+layout: post
+title: "OC运行时及消息转发"
+date: 2015-07-29 14:20:52 +0800
+comments: true
+categories: 
+---
+
+1、RunTime（运行时）概念理解
+
+   （1）函数调用方式
+   
+       OC的函数调用即通过在对象上调用方法，也称之为“传递消息”，相对于C语言函数调用，使用静态绑定，即在编译期就决定运行时所应调用的函数，OC则是通过动态绑定的方式，对所要调用的函数在运行期才能确定，即对象收到消息之后，究竟该调用哪个方法完全由运行期决定，并且可以在程序运行时改变，是一门真正的动态语言。
+   （2）函数调用（传递消息）过程 1
+   
+      函数调用过程即给对象发送消息的处理过程，以id returnValue = [someObject measageName:pameter] 消息为例：
+      
+      编译期，编译器看到这行代码，会将其转换为一条标准的C语言函数调用，id returnValue = objc_msgSend(someObject, @selector(messageName:),  parameter); 如果在编译期向类发送了其无法解读的消息也不会报错，因为运行时可以继续向类中添加方法。
+      
+     运行期，即动态消息派发系统执行过程，objc_msgSend函数会首先根据接收者（someObject）和选择子（measageName）的类型在接收者所属的类中搜寻它的方法列表，这个方法列表其实是类里面的一张表格，表格是一个存放健值对的列表，健用选择子的名字表示，值即选择子对应方法的函数指针，因为OC对象的每个方法都可以视为如下简单的C函数，<return_type> Class_selector(id self, SEL _cmd, ...)，这也是为什么后面找到相应匹配的方法后，能够跳转到相应实现代码的原因。
+            
+      如果在方法列表中找到与选择子名称相符的方法，就跳转到相应方法的实现代码，如果找不到，就沿着继承体系继续向上查找，若找到合适的方法就会再跳转到该方法实现代码，如果最终还是没找到相符合的代码，执行消息转发。即后面将要介绍的消息转发过程。《在这个过程中，objc_msgSend会将匹配结果缓存到快速映射表，这样后面执行相同的查找速度更快，尽管没有静态绑定的函数调用那么迅速，但是也不会慢很多了》
+           下面的几个函数，与objc_msgSend函数类似，它们主要用于处理一些边界情况，可以了解一下
+            objc_msgSend_stret 待发送的消息要返回结构体   objc_msgSend_fpret 待发送的消息要返回浮点数  objc_msgSendSuper待发送的消息要给超类发消息。
+            
+            
+  （3）函数调用（消息转发）过程 2
+  
+       经过上面传递消息过程还是没有找到匹配的方法之后，就会启动下面的消息转发过程。消息转发又分为动态方法解析、备援接受者、完整的消息转发三个步骤。
+       
+       动态方法解析：类的接受者，看是否能动态添加方法，以处理当前无法解读的选择子，首先要在所属类中重写下面的类方法，＋(BOOL) resolveInstanceMethod ( SEL )，前面是为了处理未知的实例方法，如果是处理未知的类方法，重写 ＋(BOOL) resolveClassMethod ( SEL )，selector 参数,即未知的选择子，在这里有机会新增处理此选择子的方法，若方法的实现代码已经写好，运行的时候就会动态插入到类里面。书本上coredata的dynamic属性即通过上面的方式实现。
+ 
+        备援接受者：请接受者看看有没有其他对象能处理这条消息，这一步进行处理的相应方法为 － (id) forwardingTargetForSelector: (SEL) selector; 方法参数即代码未知选择子，注意：我们无法操作经由这一步转发的消息，要通过接受者自己去找备援对象，若找到则返回，找不到返回nil。 
+ 
+        完整消息转发：修改消息的内容，即创建NSInvocation对象，把未能处理的消息的选择子，目标及参数封装到这个对象中，然后触发NSInvocation对象，把消息指派给目标对象，通过重写下列方法来转发消息。－ （void) forwardInvocation:(NSInvocation *) invocation。此方法默认实现，即改变调用目标，使消息在新目标上可以调用，这样与备援接受者实现的方法等效，只是在发送给备援接受者之前可以修改消息内容。
+        
+        
+2、method swizzling的理解和用法
+
+   (1) Method Swizzling基本概念
+   
+        通过前面对OC运行时的理解，允许我们修改selector(method name)到implementation(the method code itself)的映射。网上说，利用这个特性，我们可以"修补"那些没有源码的方法，如（AppKit，FoundationKit，或第三方的库等）。给这些方法基础上，增加新的操作，等和category不同的是，category如果定义了一个原来相同的方法，那么会直接覆盖原来的方法。Method Swizzling让你可以在替代原来的方法的同时可以调用原来的方法，并且为这个方法增加一些新的功能，记录日志等等，有点像subclassing。
+        
+   (2) Method Swizzling原理
+   
+       在前面已经讲到，在Objective-C中调用一个方法，其实是向一个对象发送消息，查找消息的唯一依据是selector的名字。利用Objective-C的动态特性，可以实现在运行时偷换selector对应的方法实现，达到给方法挂钩的目的。
+      每个类都有一个方法列表，存放着selector的名字和方法实现的映射关系。IMP有点类似函数指针，指向具体的Method实现。
+      selectorA --> IMPa    selectorB --> IMPb    selectorC -->IMPc ....
+     要实现互换两个函数的操作，首先要利用下面的两个函数：
+     void method_exchangeImplementation(Method m1, Method m2)   //交换参数中传入的两个方法实现，方法实现可通过下面的函数获得
+     Method class_geInstanceMethod (Class aClass, SEL aSelector)   //根据给定的选择从类中取出与之相关的方法的实现
+    以交换selectorA和selectorB两个方法的实现为例，交换后的指针指向为，selectorA --> IMPb  selectorB -->  IMPa
+     (3) Method Swizzling实例代码
+     以在NSString的一个分类中添加一个新的方法myLowercaseString ,与NSString已经存在的lowercaseString方法的交换为例，首先在分类中定义如下方法：
+     
+@interface NSString (myAdditions)
+     - (NSString *)myLowercaseString;
+@end
+ 
+ 
+@implementation NSString (myAdditions)
+- (NSString *)myLowercaseString {
+    NSString *lowercase = [self myLowercaseString];
+    NSLog(@"输出结果为:%@ => %@", self, lowercase);
+    return lowercase;
+}
+@end
+// 通过下面代码来交换上面两个方法
+Method originMethod = class_getInstanceMethod([NSString class], @selector(lowercaseString));
+Method swappedMethod = class_getInstanceMethod([NSString class], @selector(myLowercaseString));
+method_exchangeImplementations(originMethod, swappedMethod);
+
+//最后在NSString上调用lowercaseString方法，会输出NSLog的打印语句，输出结果为:
+NSString *string = @"THIS IS THE STRING";
+NSString *lowercaseString = [string lowercaseString];
+//实际上，交换方法后，lowercaseString调用的是myLowercaseString的具体实现，而myLowercaseString里面又调用它自己指向的lowercaseString方法的实现，从而得到上面的输出结果
+
+ 
+     
+第三部分、懒加载
+
+懒加载——也称为延迟加载，即在需要的时候才加载（效率低，占用内存小）。
+注意：如果是懒加载的话则一定要注意先判断是否已经有了，如果没有那么再去进行实例化
+ 
+使用懒加载的好处：
+
+（1）不必将创建对象的代码全部写在viewDidLoad方法中，代码的可读性更强
+
+（2）每个控件的getter方法中分别负责各自的实例化处理，代码彼此之间的独立性强，松耦合
+具体实现：重写相关属性的get方法，在这个方法中alloc init该属性，如果是ui控件，在这里创建后添加到父控件上。
+
+
+ 
+有一个问题：在ARC下使用懒加载，不在当前可见范围内的控件会不会做release处理，就像UITabBarController不在当前显示窗口上的viewcontroller就应该释放。
