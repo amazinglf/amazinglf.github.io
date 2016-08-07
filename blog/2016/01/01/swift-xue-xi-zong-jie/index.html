@@ -513,6 +513,10 @@ return incFunc2
 <pre><code>  http://special.csdncms.csdn.net/the-swift-programming-language-in-chinese/index.shtml  中文的
 
   https://itunes.apple.com/cn/book/the-swift-programming-language/id881256329?mt=11 英文的
+  遇到一些坑
+  在swift中使用uitableview设置它的样式参数时，总是报找不到我输入的plain样式的参数，找了很多原因，结果发现枚举名要加名称前缀或者是点 .Plain UITableViewStyle.Plain。
+  如果报下面这样的错误：execution was interrupted, reason: EXC_BAD_INSTRUCTION (code=EXC_1386_INVOP, subcode=0x0)  先直接在控制台输出的打印信息中找原因，通过看控制台，发现是我调用某个函数获取的是可选值，但是我对这个返回值做申明时没有定义为可选值。
+  现在又出现了一个问题是，调用oc方法或者oc第三方库的方法，oc中没有可选值的概念，再swift中调用时，看调用提示默认返回的是一个隐式解析可选，按道理使用隐式解析可选是保证他初始一定会有值的，但是结果oc中没有可选值概念调用的时候却没有值，然后调用相应方法一运行就会报错，这个应该怎么处理。需要再对可选链以及oc方法调用进行研究？
 </code></pre>
 </div>
 
@@ -564,6 +568,10 @@ return incFunc2
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2016/05/07/nsurl-loading-system/">NSURL Loading System</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2016/02/18/reactive-cocoaxue-xi-bi-ji/">Reactive Cocoa学习笔记</a>
       </li>
     
@@ -577,10 +585,6 @@ return incFunc2
     
       <li class="post">
         <a href="/blog/2015/11/27/cocoapodsshi-jian/">CocoaPods实践</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/11/14/ocdan-yuan-ce-shi/">OC单元测试</a>
       </li>
     
   </ul>
