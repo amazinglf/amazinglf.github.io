@@ -4,7 +4,7 @@
   <title><![CDATA[我的iOS开发之旅]]></title>
   <link href="http://amazinglf.github.io/atom.xml" rel="self"/>
   <link href="http://amazinglf.github.io/"/>
-  <updated>2016-12-11T16:22:09+08:00</updated>
+  <updated>2016-12-11T16:26:51+08:00</updated>
   <id>http://amazinglf.github.io/</id>
   <author>
     <name><![CDATA[梁芳]]></name>
@@ -15,7 +15,7 @@
   
   <entry>
     <title type="html"><![CDATA[Runloop学习调研]]></title>
-    <link href="http://amazinglf.github.io/blog/nsurl-loading-system%E5%89%AF%E6%9C%AC.html/"/>
+    <link href="http://amazinglf.github.io/blog/nsurl-loading-system%E5%89%AF%E6%9C%AC/"/>
     <updated>2016-11-07T15:45:29+08:00</updated>
     <id>http://amazinglf.github.io/blog/nsurl-loading-system副本</id>
     <content type="html"><![CDATA[<h3>1、RunLoop与线程关系</h3>
@@ -156,7 +156,7 @@ CommonMode：默认包含了所有的mode，譬如想让定时器在界面滑动
   
   <entry>
     <title type="html"><![CDATA[NSURL Loading System]]></title>
-    <link href="http://amazinglf.github.io/blog/nsurl-loading-system.html/"/>
+    <link href="http://amazinglf.github.io/blog/nsurl-loading-system/"/>
     <updated>2016-05-07T15:45:29+08:00</updated>
     <id>http://amazinglf.github.io/blog/nsurl-loading-system</id>
     <content type="html"><![CDATA[<h3>1、概述</h3>
@@ -246,7 +246,7 @@ CommonMode：默认包含了所有的mode，譬如想让定时器在界面滑动
   
   <entry>
     <title type="html"><![CDATA[Reactive Cocoa学习笔记]]></title>
-    <link href="http://amazinglf.github.io/blog/reactive-cocoaxue-xi-bi-ji.html/"/>
+    <link href="http://amazinglf.github.io/blog/reactive-cocoaxue-xi-bi-ji/"/>
     <updated>2016-02-18T23:40:18+08:00</updated>
     <id>http://amazinglf.github.io/blog/reactive-cocoaxue-xi-bi-ji</id>
     <content type="html"><![CDATA[<p>入门</p>
@@ -430,7 +430,7 @@ return subject;
   
   <entry>
     <title type="html"><![CDATA[Swift 学习总结]]></title>
-    <link href="http://amazinglf.github.io/blog/swift-xue-xi-zong-jie.html/"/>
+    <link href="http://amazinglf.github.io/blog/swift-xue-xi-zong-jie/"/>
     <updated>2016-01-01T14:33:03+08:00</updated>
     <id>http://amazinglf.github.io/blog/swift-xue-xi-zong-jie</id>
     <content type="html"><![CDATA[<p>Swift学习之基础部分</p>
@@ -872,7 +872,7 @@ return incFunc2
   
   <entry>
     <title type="html"><![CDATA[SDWebImage源码学习]]></title>
-    <link href="http://amazinglf.github.io/blog/sdwebimageyuan-ma-xue-xi.html/"/>
+    <link href="http://amazinglf.github.io/blog/sdwebimageyuan-ma-xue-xi/"/>
     <updated>2015-12-02T22:28:07+08:00</updated>
     <id>http://amazinglf.github.io/blog/sdwebimageyuan-ma-xue-xi</id>
     <content type="html"><![CDATA[<p>一、SDWebImage库的组成</p>
@@ -946,7 +946,7 @@ return incFunc2
   
   <entry>
     <title type="html"><![CDATA[CocoaPods实践]]></title>
-    <link href="http://amazinglf.github.io/blog/cocoapodsshi-jian.html/"/>
+    <link href="http://amazinglf.github.io/blog/cocoapodsshi-jian/"/>
     <updated>2015-11-27T18:26:33+08:00</updated>
     <id>http://amazinglf.github.io/blog/cocoapodsshi-jian</id>
     <content type="html"><![CDATA[<p>1、cocoapods概念</p>
@@ -1057,7 +1057,7 @@ pod "PracticeForPodProject", :git =&gt; 'ssh://git@git.XXX.com/~liangfang/custom
   
   <entry>
     <title type="html"><![CDATA[OC单元测试]]></title>
-    <link href="http://amazinglf.github.io/blog/ocdan-yuan-ce-shi.html/"/>
+    <link href="http://amazinglf.github.io/blog/ocdan-yuan-ce-shi/"/>
     <updated>2015-11-14T22:55:00+08:00</updated>
     <id>http://amazinglf.github.io/blog/ocdan-yuan-ce-shi</id>
     <content type="html"><![CDATA[<h3>1、XCode自带XCTest框架了解</h3>
@@ -1272,7 +1272,7 @@ describe(@"Password Text Field", ^{
   
   <entry>
     <title type="html"><![CDATA[MVVM框架学习实践]]></title>
-    <link href="http://amazinglf.github.io/blog/mvvmkuang-jia-xue-xi-shi-jian.html/"/>
+    <link href="http://amazinglf.github.io/blog/mvvmkuang-jia-xue-xi-shi-jian/"/>
     <updated>2015-09-20T17:54:08+08:00</updated>
     <id>http://amazinglf.github.io/blog/mvvmkuang-jia-xue-xi-shi-jian</id>
     <content type="html"><![CDATA[<h2>1、mvvm基本概念</h2>
@@ -1533,7 +1533,7 @@ return [RACSignal createSignal:^RACDisposable *(id&lt;RACSubscriber&gt; subscrib
   
   <entry>
     <title type="html"><![CDATA[OC内存管理]]></title>
-    <link href="http://amazinglf.github.io/blog/ocnei-cun-guan-li.html/"/>
+    <link href="http://amazinglf.github.io/blog/ocnei-cun-guan-li/"/>
     <updated>2015-09-11T16:09:37+08:00</updated>
     <id>http://amazinglf.github.io/blog/ocnei-cun-guan-li</id>
     <content type="html"><![CDATA[<p>1、RunTime（运行时）概念理解</p>
@@ -1621,7 +1621,7 @@ Method originMethod = class_getInstanceMethod([NSString class], @selector(lowerc
   
   <entry>
     <title type="html"><![CDATA[自动布局AutoLayout]]></title>
-    <link href="http://amazinglf.github.io/blog/zi-dong-bu-ju-autolayout.html/"/>
+    <link href="http://amazinglf.github.io/blog/zi-dong-bu-ju-autolayout/"/>
     <updated>2015-08-20T22:38:36+08:00</updated>
     <id>http://amazinglf.github.io/blog/zi-dong-bu-ju-autolayout</id>
     <content type="html"><![CDATA[<h3>1、AutoLayout的基本概念</h3>
@@ -1690,7 +1690,7 @@ Method originMethod = class_getInstanceMethod([NSString class], @selector(lowerc
   
   <entry>
     <title type="html"><![CDATA[iOS生命周期相关知识总结]]></title>
-    <link href="http://amazinglf.github.io/blog/iossheng-ming-zhou-qi-xiang-guan-zhi-shi-zong-jie.html/"/>
+    <link href="http://amazinglf.github.io/blog/iossheng-ming-zhou-qi-xiang-guan-zhi-shi-zong-jie/"/>
     <updated>2015-08-15T13:18:11+08:00</updated>
     <id>http://amazinglf.github.io/blog/iossheng-ming-zhou-qi-xiang-guan-zhi-shi-zong-jie</id>
     <content type="html"><![CDATA[<p>1、 iOS工程中的各文件和目录的作用</p>
@@ -1858,7 +1858,7 @@ ViewController中view卸载过程.png
   
   <entry>
     <title type="html"><![CDATA[OC运行时及消息转发]]></title>
-    <link href="http://amazinglf.github.io/blog/ocyun-xing-shi-ji-xiao-xi-zhuan-fa.html/"/>
+    <link href="http://amazinglf.github.io/blog/ocyun-xing-shi-ji-xiao-xi-zhuan-fa/"/>
     <updated>2015-07-29T14:20:52+08:00</updated>
     <id>http://amazinglf.github.io/blog/ocyun-xing-shi-ji-xiao-xi-zhuan-fa</id>
     <content type="html"><![CDATA[<h2>类与对象的关系结构图</h2>
@@ -2107,7 +2107,7 @@ objc_msgSend(receiver, selector, arg1, arg2, &hellip;)</p>
   
   <entry>
     <title type="html"><![CDATA[Git 学习笔记]]></title>
-    <link href="http://amazinglf.github.io/blog/git-xue-xi-bi-ji.html/"/>
+    <link href="http://amazinglf.github.io/blog/git-xue-xi-bi-ji/"/>
     <updated>2015-04-15T11:09:27+08:00</updated>
     <id>http://amazinglf.github.io/blog/git-xue-xi-bi-ji</id>
     <content type="html"><![CDATA[<p>1、理解git在本地常用的操作
