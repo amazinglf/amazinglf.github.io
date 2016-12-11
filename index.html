@@ -248,186 +248,219 @@ CommonMode：默认包含了所有的mode，譬如想让定时器在界面滑动
   </header>
 
 
-  <div class="entry-content"><p>1、理解git在本地常用的操作
-  （1）git status命令的作用，即从查看本地仓库中出现了的修改和变化的角度去想，如添加、修改和删除文件的操作。比较常见的就是添加新的文件和修改仓库中的某个文件。该命令方便我们查看我们在本地所做的一些修改。 <br/>
-   2）git本地操作的三个区域<br/>
-         工作区  暂存区  版本库</p>
+  <div class="entry-content"><h3>Git 原理</h3>
 
-<p>   1、下面以新增加的文件为例，通过git status查看，它是Untracked files（未跟踪的文件）－》工作区。运行git add－》暂存区。再运行git commit－》本地版本库。
-   如果在暂存区的时候对这个文件进行了修改，通过git status查看，该文件一个还在暂存区Changes to be committed，一个在工作区Changes not staged for commit。</p>
+<h4>版本控制系统</h4>
 
-<p>   2、下面对修改本地仓库中的某个文件为例。通过status查看，它是Changes not staged for commit:－》工作区。运行git add－》暂存区，再运行git commit－》本地版本库。如果在暂存区对这个文件进行修改，结果与前面也是一样的。（即出现两个一样的文件）</p>
+<p>版本控制系统目前有三大类，分别是本地版本控制系统、集中式版本控制系统、分布式版本控制系统，Git则是一个非常强大的分布式版本控制系统
+   <img src="../images/git1.png" alt="Alt text" /></p>
 
-<p>   3、下面对删除本地仓库中的某个文件为例，如果是手工删除或者使用［rm 文件名］删除，通过status查看，Changes not staged for commit－》工作区。运行git rm 文件名－－》暂存区。再运行git commit－》本地版本库，该文件就不再纳入版本管理 git rm &ndash;cached readme.txt  要移除跟踪但不删除文件，即从跟踪清单中删除。比如一些大型日志文件或者一堆 .a 编译文件比较适应  git mv file_from file_to  对文件改名</p>
+<h4>Git分布式版本控制实现</h4>
 
-<p>   最后总结，在工作区，文件有可能是新增加未跟踪的，有可能是修改未暂存，有可能是暂存后又修改未暂存的，有可能是跟踪后暂存然后修改未暂存的。开始总是会把未跟踪、未暂存、未提交这几种状态弄晕，其实只是表示一个状态，要与他实际的工作区域对应上，即从前面两个角度去分析。</p>
+<p>（1）首先从git远程仓库克隆下来的是整个仓库文件的完整拷贝<br/>
+（2）在本地修改文件，进行提交之前会保存修改文件的完整快照，而不是只保存差异变化或者文件补丁，对于当前版本没有修改的文件，会保存指向上一个版本该文件的指针（即未变化的文件只会保存上一个版本的指针），这样随着版本越来越多，git所占用的空间不会越来越大。<br/>
+SHA-1 校验和<br/>
+（3）如果把git存储的文件通过key-value的形式表示，value即表示文件内容，key就是文件内容与文件头信息的SHA-1 校验和（一种加密算法，计算出的是一个不可逆的数值，用于验证文件是否被修改过），即我们常说的commit号（也称为文件的指针），git在这里使用SHA-1 校验和主要是为了保证数据的完整性，即用这个独一无二的commit号来表示当前版本的完整信息，如果当前版本的文件做了一点点修改，计算出的commit号就会不一样（雪崩效应？）。 因此，每一个版本的文件都有唯一的commit号（唯一的指针）</p>
 
-<p>2、远程仓库使用（注意与本地仓库进行区分）
-   方式一：git clone git地址  克隆一个远程仓库到本地，会在本地当前目录下创建一个和远程仓库一样的文件夹，testlf。进入这个文件夹，就可以看到➜  testlf git:(master) . 用git管理项目的标识
-   方式二：git init   对当前文件夹下的文件用git进行管理。会在当前文件夹下生成一个.git的隐藏文件。但是没有与任何远程仓库关联。那如何与远程仓库进行关联呢？
-    1、git remote add pb git://github.com/paulboone/ticgit.git   //本操作含义：添加一个新的远程仓库，可以指定一个简单的名字,还没有进行任何关联，一般默认的仓库名是origin
-     2、git fetch pb  / /抓取所有 Paul 上的数据。完成这个操作，Paul 的主干分支（master）已经完全可以在本地访问了，对应的名字是 pb/master
-     3、你可以将它合并到自己的某个分支，或者切换到这个分支，看看有些什么有趣的更新 （本地仓库和远程仓库的内容就相当于两个分支了，还要自己去尝试做）
+<p>文件(blob)对象，树(tree)对象，提交(commit)对象<br/>
+（4）如果将git中每一个文件用blog来表示，所有文件通过tree来进行管理，类似下图所示的关系，每一个结点都有一个 SHA-1 指针，当这个结点的文件被修改并提交时，会生成一个新的blog文件结点以及新的唯一SHA-1 校验和，同时将此次提交的文件指针指向新的SHA-1 校验和，对于没有被修改的结点，则文件指针保持不变，不会生成新的blog结点
+<a href="https://static.lufficc.com/image/8f108375134643622b7e9273520eed91.png">https://static.lufficc.com/image/8f108375134643622b7e9273520eed91.png</a><br/>
+（5）前面讲到了commit号，其实commit号不仅包含SHA-1 校验和信息，还包括作者、当前提交时间等信息，并且在一个版本中，commit代表的是树结点中最顶层的tree结点，参考下图，第一个First Commit对应了一个Test.txt文件，第二个Second Commit对这个文件进行了修改，因此生成了一个新的blog结点，以及添加了一个新文件的结点，第三个Third Commit没有对这些文件进行修改，因此文件指针指向上一个commit的blog结点。注意图中，除了第一次每个提交对象都有一个指向上一次提交对象的指针。<br/>
+<a href="https://static.lufficc.com/image/092c08d87d63ff0a804356705ce01c4b.png">https://static.lufficc.com/image/092c08d87d63ff0a804356705ce01c4b.png</a><br/>
+总结：blog结点就是文件内容，tree结点就是用来管理blog结点和子tree结点的，commit结点用来管理每次提交最顶层的tree结点，并且包含作者、提交时间、上一次提交的commit等信息。</p>
+
+<p>Git引用<br/>
+（6）如果我们要通过commit号回退到某个经常使用版本，记住这个版本的commit号是一件很不现实的问题，但是如果给这个commit号起一个别名，则比较容易记住，这个别名专业术语叫引用。相关引用与commit号的对应关系存储在.git/refs文件夹中</p>
+
+<h3>远程仓库使用（注意与本地仓库进行区分）</h3>
+
+<p>   方式一：git clone git地址  克隆一个远程仓库到本地，会在本地当前目录下创建一个和远程仓库一样的文件夹，testlf。进入这个文件夹，就可以看到➜  testlf git:(master) . 用git管理项目的标识<br/>
+   方式二：git init   对当前文件夹下的文件用git进行管理。会在当前文件夹下生成一个.git的隐藏文件。但是没有与任何远程仓库关联。那如何与远程仓库进行关联呢？<br/>
+    1、git remote add pb git://github.com/paulboone/ticgit.git   //本操作含义：添加一个新的远程仓库，可以指定一个简单的名字,还没有进行任何关联，一般默认的仓库名是origin<br/>
+     2、git fetch pb  / /抓取所有 Paul 上的数据。完成这个操作，Paul 的主干分支（master）已经完全可以在本地访问了，对应的名字是 pb/master<br/>
+     3、你可以将它合并到自己的某个分支，或者切换到这个分支，看看有些什么有趣的更新 （本地仓库和远程仓库的内容就相当于两个分支了，还要自己去尝试做）<br/>
     总结：不过我觉得一般开始管理远程仓库，都会先在远程上创建一个仓库create repository。然后将他clone到本地。在这个仓库对应的本地文件夹下创建项目，或者将要用git管理的工程复制到这个项目下，就可以对它add。。。等的操作进行管理和push到远程仓库了。并且本地所做的任何更改，都可以提交到远程仓库。</p>
 
-<p>3、本地分支的新建与合并
-     （1）基本命令
-      git branch 分支名   //新建一个分支
-      git checkout 分支名   //切换到相应分支
-      注意：切换分支的时候最好保持一个清洁的工作区域。切换到下一个分支之前，保证工作区、暂存区的内容都已经提交。不然会混淆。并且它会和你即将检出的分支产生冲突从而阻止 Git 为你切换分支
-      git branch   //不加任何参数，可以查看当前分支清单，分支前的＊号表示当前所在分支
-      git branch -v //查看各个分支最后一个提交对象的信息
-      git branch &ndash;merged  //查看已经合并的分支
-      git branch – no-merged  //查看没有合并的分支
-      git branch -d 分支名 //可以删除已经合并了的，如果删除没有合并的，会提示错误
-      git branch -D 分支名  //强制删除没有合并的分支
-     （2）分支指针
-       master分支指针
-       创建新的分支，就相当于创建了一个新的分支指针。
-       head指针：切换分支时，指向你当前工作的分支
-      画分支关系图的时候，主干分支横着画，创建的新分支竖着画，这样理解更清晰一些，如果一个分支下还有多个分支时，也可以竖着并行排列即可。
-       （3）分支合并
-       比较容易出现的一种情况即，在某个分支下新建一个分支后，做了很多次提交。而（从原来分支远程pull数据下来的时候，或者本地去做了一些修改的时候）原来的分支页进行了提交，并且可能与其他分支进行了merge操作，如下所示：</p>
+<h4>git本地操作的三个区域</h4>
 
-<p>这里执行：
-git merge iss53</p>
+<p>（1）工作区、暂存区 、本地版本库，这三个区域中工作区表示现在修改代码所在的区域，比较抽象一些，暂存区即运行git add命令后文件保存的区域，本地版本库就是本地的这个仓库，下面通过在本地对文件进行增删改的操作以及git status命令来理解这三个区域，git status命令的作用后面有详细介绍<br/>
+（2）增加文件：通过git status查看，它是Untracked files（未跟踪的文件）－》工作区。运行git add－》暂存区。再运行git commit－》本地版本库。如果在暂存区的时候对这个文件进行了修改，通过git status查看，该文件一个还在暂存区Changes to be committed，一个在工作区Changes not staged for commit。<br/>
+（3）修改文件：通过status查看，它是Changes not staged for commit:－》工作区。运行git add－》暂存区，再运行git commit－》本地版本库。如果在暂存区对这个文件进行修改，结果与前面也是一样的。<br/>
+（4）删除文件：如果是手动删除或者使用［rm 文件名］删除，通过status查看，Changes not staged for commit－》工作区。运行git rm 文件名－－》暂存区。再运行git commit－》本地版本库，该文件就不再纳入版本管理<br/>
+（5）总结，在工作区，文件有可能是新增加未跟踪的，有可能是修改未暂存，有可能是暂存后又修改未暂存的，有可能是跟踪后暂存然后修改未暂存的。也可以把这三个区域理解为一种状态，要与他实际的工作区域对应上，则从本地仓库中出现了的修改和变化的角度去分析。<br/>
+（6）整个工作流包含以下三步：第一步在工作区域增加、删除、修改文件，第二步执行git add，把改动保存到暂存区域，第三步执行git commit，将所做的改动永久保存到本地版本库中，第四步git push，将本地版本库修改同步到远程版本库。</p>
 
-<p>  Git 会用两个分支的末端（C4 和 C5）以及它们的共同祖先（C2）进行一次简单的三方合并计算。
-合并后的结果重新做一个新的快照，并自动创建一个指向它的提交对象（C6）。如下所示：</p>
+<h3>Git 常用命令</h3>
 
-<p>Git 作了合并，但没有提交，如果有冲突会提示。
-$ git merge iss53
-Auto-merging index.html
-CONFLICT (content): Merge conflict in index.html
-Automatic merge failed; fix conflicts and then commit the result.
+<pre><code>git status ：方便我们查看本地文件的状态以及文件所在的工作区域, 可以用 gst 简写
+git rm --cached readme.txt  要移除跟踪但不删除文件，即从跟踪清单中删除。比如一些大型日志文件或者一堆 .a 编译文件比较适合
+git mv file_from file_to  对文件改名
+ git push origin :refs/tags/1.3.4  git删除远端tag
+ git tag -d 1.3.4     git删除本地tag
+ git push --delete origin 远程分支名   git 删除远程分支
+区分远程仓库与本地仓库
+git push origin 本地分支名:refs/heads/远程分支名  提交本地分支到远程分支, （有时候报找不到远程分支等的情况， 可类似加上refs/heads/）
+git branch --set-upstream 本地分支名 origin/远程分支名   本地分支关联到远程分支
+git remote -v  查看本地关联的远程仓库地址
+git init    对当前文件夹下的文件用git进行管理。会在当前文件夹下生成一个.git的隐藏文件, 此时还没有和远程仓库进行任何关联
+git remote add 修改后的仓库名 远程仓库地址  （修改后的仓库名不写的情况下，仓库名默认与远程一致，一般默认的仓库名是origin）
+git clone 远程仓库地址   克隆一个远程仓库到本地，会在本地当前目录下创建一个和远程仓库一样的文件夹
+
+git branch 分支名   //新建一个分支
+git branch     //查看当前分支清单，分支前的＊号表示当前所在分支
+git checkout 分支名   //切换到相应分支， 注意：切换分支的时候最好保持一个清洁的工作区域。切换到下一个分支之前，保证工作区、暂存区的内容都已经提交。不然会混淆。并且它会和你即将检出的分支产生冲突从而阻止 Git 为你切换分支
+git checkout  -b 分支名  //将前面新建分支和切换分支的命令结合起来
+git remote set-url 本地仓库名 远程仓库地址    //修改本地关联的远程仓库，为新的远程仓库地址
+git init    //将本地的代码纳入到git版本控制
+</code></pre>
+
+<h3>本地分支的新建与合并</h3>
+
+<pre><code> （1）基本命令
+  git branch 分支名   //新建一个分支
+  git checkout 分支名   //切换到相应分支
+  注意：切换分支的时候最好保持一个清洁的工作区域。切换到下一个分支之前，保证工作区、暂存区的内容都已经提交。不然会混淆。并且它会和你即将检出的分支产生冲突从而阻止 Git 为你切换分支
+  git branch   //不加任何参数，可以查看当前分支清单，分支前的＊号表示当前所在分支
+  git branch -v //查看各个分支最后一个提交对象的信息
+  git branch --merged  //查看已经合并的分支
+  git branch – no-merged  //查看没有合并的分支
+  git branch -d 分支名 //可以删除已经合并了的，如果删除没有合并的，会提示错误
+  git branch -D 分支名  //强制删除没有合并的分支
+ （2）分支指针
+   master分支指针
+   创建新的分支，就相当于创建了一个新的分支指针。
+   head指针：切换分支时，指向你当前工作的分支
+  画分支关系图的时候，主干分支横着画，创建的新分支竖着画，这样理解更清晰一些，如果一个分支下还有多个分支时，也可以竖着并行排列即可。
+   （3）分支合并
+   比较容易出现的一种情况即，在某个分支下新建一个分支后，做了很多次提交。而（从原来分支远程pull数据下来的时候，或者本地去做了一些修改的时候）原来的分支页进行了提交，并且可能与其他分支进行了merge操作，如下所示：
+</code></pre>
+
+<h3>解决合并冲突</h3>
+
+<p>$ git merge iss53<br/>
+Auto-merging index.html<br/>
+CONFLICT (content): Merge conflict in index.html<br/>
+Automatic merge failed; fix conflicts and then commit the result.<br/>
 并且停下来等你解决冲突，可以用 git status 查阅：并且会显示未解决冲突的具体文件。直接打开相应文件，用vim进行手动修改即可</p>
 
-<p>可以看到 很多等号 隔开的到 很多尖括号 HEAD的上半部分，是 HEAD（即 master 分支，在运行 merge 命令时所切换到的分支）中的内容。下半部分是在 iss53 分支中的内容。解决冲突的办法无非是二者选其一或者由你亲自整合到一起。
+<p>可以看到 很多等号 隔开的到 很多尖括号 HEAD的上半部分，是 HEAD（即 master 分支，在运行 merge 命令时所切换到的分支）中的内容。下半部分是在 iss53 分支中的内容。解决冲突的办法无非是二者选其一或者由你亲自整合到一起。<br/>
 最后 尖括号和等号 这些行是需要手动删除的。下面是选其一的方式解决冲突</p>
 
 <p>运行 git add 将把它们标记为已解决状态 ，再运行一次 git status 来确认所有冲突都已解决，就可以提交了。</p>
 
-<p>  （4）长期分支理解</p>
+<h3>版本回退命令</h3>
 
-<p>   master 分支中保留完全稳定的代码，即已经发布或即将发布的代码。 develop 或 next 的平行分支，专门用于后续的开发。一旦进入某种稳定状态，便可以把它合并到 master 里。
-     下面是书本上的一个例子，起先我们在 master 工作到 C1，然后开始一个新分支 iss91 尝试修复 91 号缺陷，提交到 C6 的时候，又冒出一个解决该问题的新办法，于是从之前 C4 的地方又分出一个分支 iss91v2，干到 C8 的时候，又回到主干 master 中提交了 C9 和 C10，再回到iss91v2 继续工作，提交 C11，接着，又冒出个不太确定的想法，从 master 的最新提交 C10 处开了个新的分支 dumbidea 做些试验。</p>
+<p>   git reset &ndash;hard HEAD^<br/>
+ 因为Git必须知道当前版本是哪个版本，在Git中，用HEAD表示当前版本，也就是最新的提交（通过git log／git log &ndash;pretty=oneline）可以查看提交的commit号。上一个版本就是HEAD^，上上一个版本就是HEAD^^，当然往上100个版本写100个^比较容易数不过来，所以写成HEAD~100。  <br/>
+回退到相应版本之后，查看相应文件，就会发现也会回到之前修改的状态。通过git log查看版本库也会发现。回退版本之前的版本都没有了。<br/>
+1、如果想回到之前最新的版本，怎么办，只要命令行终端没有关闭，找到之前git log查看的相应版本的commitid，然后使用下面的命令即可<br/>
+git reset &ndash;hard 命令号（取前几位就可以了），然后再查看相应文件，发现又回到最新的了。<br/>
+2、如果关闭电脑，关闭命令行终端后，想回到之前最新的版本，怎么办,使用git reflog  就可以查看每一次命令的记录，然后就可以找到相应版本的commitid号</p>
 
-<p>   对于从之前 C4 的地方又分出一个分支 iss91v2，我一直都不太明白，是怎么回到分支的某个commit的。原来git还有一个很高级的命令
-<a href="http://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000/0013744142037508cf42e51debf49668810645e02887691000">http://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000/0013744142037508cf42e51debf49668810645e02887691000</a></p>
+<h3>总结</h3>
 
-<p> （5）版本回退命令
-   git reset &ndash;hard HEAD^
- 因为Git必须知道当前版本是哪个版本，在Git中，用HEAD表示当前版本，也就是最新的提交（通过git log／git log &ndash;pretty=oneline），
-可以查看提交的commit号。上一个版本就是HEAD^，上上一个版本就是HEAD^^，当然往上100个版本写100个^比较容易数不过来，所以写成HEAD~100。
-回退到相应版本之后，查看相应文件，就会发现也会回到之前修改的状态。通过git log查看版本库也会发现。回退版本之前的版本都没有了。
-      1、如果想回到之前最新的版本，怎么办，
-只要命令行终端没有关闭，找到之前git log查看的相应版本的commitid，然后使用下面的命令即可
-git reset &ndash;hard 命令号（取前几位就可以了），然后再查看相应文件，发现又回到最新的了。
-2、如果关闭电脑，关闭命令行终端后，想回到之前最新的版本，怎么办
-使用git reflog  就可以查看每一次命令的记录，然后就可以找到相应版本的commitid号</p>
-
-<p>   总结
-   HEAD指向的版本就是当前版本，因此，Git允许我们在版本的历史之间穿梭，使用命令git reset &ndash;hard commit_id。
-穿梭前，用git log可以查看提交历史，以便确定要回退到哪个版本。
+<p>   HEAD指向的版本就是当前版本，因此，Git允许我们在版本的历史之间穿梭，使用命令git reset &ndash;hard commit_id。<br/>
+穿梭前，用git log可以查看提交历史，以便确定要回退到哪个版本。<br/>
 要重返未来，用git reflog查看命令历史，以便确定要回到未来的哪个版本。</p>
 
-<p>5、远程分支的理解和使用
-远程分支的表示形式： (远程仓库名)/(分支名)
-通过下面的图对远程分支和本地分支进行一个对比，同时与远程仓库和本地仓库的概念区分开。</p>
+<h3>远程分支的理解和使用</h3>
 
-<p>5、创建远程分支方法
-      （1）我是在本地执行如下命令时，git push origin master:new-remote-branch，如果远程没有一个名为new-remote-branch的分支，系统就会自动创建一个origin/new-remote-branch的远程分支了。
-git push (远程仓库名)  (本地分支名) : (远程分支名)
- （可以将本地的某个分支提交到远程的任意一个分支，这个分支就默认跟踪了这个远程分支），
-➜  gcdTestForGit git:(master) git push origin master:new-remote-branch
+<p>远程分支的表示形式： (远程仓库名)/(分支名)<br/>
+创建远程分支方法<br/>
+      （1）我是在本地执行如下命令时，git push origin master:new-remote-branch，如果远程没有一个名为new-remote-branch的分支，系统就会自动创建一个origin/new-remote-branch的远程分支了。<br/>
+git push (远程仓库名)  (本地分支名) : (远程分支名)<br/>
+ （可以将本地的某个分支提交到远程的任意一个分支，这个分支就默认跟踪了这个远程分支），</p>
+
+<pre><code>➜  gcdTestForGit git:(master) git push origin master:new-remote-branch
 Counting objects: 4, done.
 Delta compression using up to 8 threads.
 Compressing objects: 100% (3/3), done.
 Writing objects: 100% (4/4), 353 bytes | 0 bytes/s, done.
 Total 4 (delta 2), reused 0 (delta 0)
-remote:
+remote: 
 remote: Create pull request for new-remote-branch:
 remote:   git分支
-remote:
+remote: 
 To git地址
- * [new branch]      master -> new-remote-branch
-➜  gcdTestForGit git:(master)
-   （2）跟踪某个远程分支 方法：  从远程分支 checkout 出对应的本地分支，即相当于在本地创建一个与远程一样的分支，进行跟踪
+ * [new branch]      master -&gt; new-remote-branch
+➜  gcdTestForGit git:(master) 
+</code></pre>
+
+<p>   （2）跟踪某个远程分支 方法：  从远程分支 checkout 出对应的本地分支，即相当于在本地创建一个与远程一样的分支，进行跟踪      <br/>
       创建方式：
-      git checkout -b master origin/master   ／／从远程分支新建并切换到master 本地分支，其内容同远程分支 origin/master 一致，这样你就可以在里面继续开发了   。其实这些在git clone  的时候git都给我们做好了。但是如果是其他git add 的远程分支，我们就需要手动去做这些操作。
-➜  gcdTestForGit git:(master) git checkout -b test-link-remote origin/new-remote-branch<br/>
+      git checkout -b master origin/master     ／／从远程分支新建并切换到master 本地分支，其内容同远程分支 origin/master 一致，这样你就可以在里面继续开发了 。其实这些在git clone  的时候git都给我们做好了。但是如果是其他git add 的远程分支，我们就需要手动去做这些操作。</p>
+
+<pre><code>➜  gcdTestForGit git:(master) git checkout -b test-link-remote origin/new-remote-branch  
 Branch test-link-remote set up to track remote branch new-remote-branch from origin.
-Switched to a new branch &lsquo;test-link-remote&rsquo;
-➜  gcdTestForGit git:(test-link-remote)
-      git checkout &ndash;track origin/master    ／／1.6.2 以上版本的 Git，对上面第一种创建方式进行简化。要为本地分支设定不同于远程分支的名字，就使用第一种方式换个名字即可。
-      作用：1、跟踪分支里输入 git push，Git 会自行推断应该向哪个服务器的哪个分支推送数据。
-           2、同样，在这些分支里运行 git pull 会获取所有远程索引，并把它们的数据都合并到本地分支中来。
-      注意：如果要在特定的远程分支中工作，提交数据，必须先按照上面的方式在本地先跟踪这个分支（比如development分支），然后在这个本地分支下再新建分支（如bugfix/mybranch，进行操作，完成后提交到远程的bugfix/mybranch分支，最后在远程合并到development分支
-     实例操作：
-      我们可以通过创建很多个本地分支来追踪某个远程分支。然后每次push，都自动提交到这个远程分支下。最后master分支可以将远程分支合并。
-如下图所示。
-test2-link-remote和test-link-remote是跟踪远程分支origin／new-remote-branch 的两个本地分支。当本地分支test2-link-remote   push到跟踪的远程分支上时，会提示本地分支test-link-remote落后远程分支一个版本，</p>
+Switched to a new branch 'test-link-remote'
+➜  gcdTestForGit git:(test-link-remote) 
+      git checkout --track origin/master    ／／1.6.2 以上版本的 Git，对上面第一种创建方式进行简化。要为本地分支设定不同于远程分支的名字，就使用第一种方式换个名字即可。
+  作用：1、跟踪分支里输入 git push，Git 会自行推断应该向哪个服务器的哪个分支推送数据。
+       2、同样，在这些分支里运行 git pull 会获取所有远程索引，并把它们的数据都合并到本地分支中来。
+  注意：如果要在特定的远程分支中工作，提交数据，必须先按照上面的方式在本地先跟踪这个分支（比如development分支），然后在这个本地分支下再新建分支（如bugfix/mybranch，进行操作，完成后提交到远程的bugfix/mybranch分支，最后在远程合并到development分支
+ 实例操作：
+  我们可以通过创建很多个本地分支来追踪某个远程分支。然后每次push，都自动提交到这个远程分支下。最后master分支可以将远程分支合并。
+</code></pre>
 
-<p>这时可以切换到test-link-remote分支下，执行pull操作，就可以保持他们一致，如下图所示：</p>
+<h3>合并两个远程分支</h3>
 
-<p>合并两个远程分支
-如上面例子所示：合并origin/master   与  origin/new-remote-branch .解决相应冲突即可(解决冲突的方法见上面）
-➜  gcdTestForGit git:(master) git merge origin/new-remote-branch
-Auto-merging gcdTestForGit/test1.txt
-CONFLICT (content): Merge conflict in gcdTestForGit/test1.txt
-Auto-merging gcdTestForGit/test.txt
-CONFLICT (content): Merge conflict in gcdTestForGit/test.txt
-Automatic merge failed; fix conflicts and then commit the result.
-➜  gcdTestForGit git:(master) ✗
-具体解决冲突如下：
-➜  gcdTestForGit git:(master) ✗ git status
-On branch master
-Your branch is up-to-date with &lsquo;origin/master&rsquo;.
-You have unmerged paths.
-  (fix conflicts and run &ldquo;git commit&rdquo;)</p>
+<p>如上面例子所示：合并origin/master   与  origin/new-remote-branch .解决相应冲突即可(解决冲突的方法见上面）
+    ➜  gcdTestForGit git:(master) git merge origin/new-remote-branch
+    Auto-merging gcdTestForGit/test1.txt
+    CONFLICT (content): Merge conflict in gcdTestForGit/test1.txt
+    Auto-merging gcdTestForGit/test.txt
+    CONFLICT (content): Merge conflict in gcdTestForGit/test.txt
+    Automatic merge failed; fix conflicts and then commit the result.
+    ➜  gcdTestForGit git:(master) ✗
+    具体解决冲突如下：
+    ➜  gcdTestForGit git:(master) ✗ git status
+    On branch master
+    Your branch is up-to-date with &lsquo;origin/master&rsquo;.
+    You have unmerged paths.
+      (fix conflicts and run &ldquo;git commit&rdquo;)</p>
 
-<p>Unmerged paths:
-  (use &ldquo;git add <file>&hellip;&rdquo; to mark resolution)</p>
+<pre><code>Unmerged paths:
+  (use "git add &lt;file&gt;..." to mark resolution)
 
-<p> both modified:   test.txt
- both modified:   test1.txt</p>
+ both modified:   test.txt
+ both modified:   test1.txt
 
-<p>no changes added to commit (use &ldquo;git add&rdquo; and/or &ldquo;git commit -a&rdquo;)
+no changes added to commit (use "git add" and/or "git commit -a")
 ➜  gcdTestForGit git:(master) ✗ vim test.txt
 ➜  gcdTestForGit git:(master) ✗ vim test1.txt
 ➜  gcdTestForGit git:(master) ✗ git status
 On branch master
-Your branch is up-to-date with &lsquo;origin/master&rsquo;.
+Your branch is up-to-date with 'origin/master'.
 You have unmerged paths.
-  (fix conflicts and run &ldquo;git commit&rdquo;)</p>
+  (fix conflicts and run "git commit")
 
-<p>Unmerged paths:
-  (use &ldquo;git add <file>&hellip;&rdquo; to mark resolution)</p>
+Unmerged paths:
+  (use "git add &lt;file&gt;..." to mark resolution)
 
-<p> both modified:   test.txt
- both modified:   test1.txt</p>
+ both modified:   test.txt
+ both modified:   test1.txt
 
-<p>no changes added to commit (use &ldquo;git add&rdquo; and/or &ldquo;git commit -a&rdquo;)
+no changes added to commit (use "git add" and/or "git commit -a")
 ➜  gcdTestForGit git:(master) ✗ git add .
 ➜  gcdTestForGit git:(master) ✗ git status
 On branch master
-Your branch is up-to-date with &lsquo;origin/master&rsquo;.
+Your branch is up-to-date with 'origin/master'.
 All conflicts fixed but you are still merging.
-  (use &ldquo;git commit&rdquo; to conclude merge)</p>
+  (use "git commit" to conclude merge)
 
-<p>Changes to be committed:</p>
+Changes to be committed:
 
-<p> modified:   test.txt
- modified:   test1.txt</p>
+ modified:   test.txt
+ modified:   test1.txt
 
-<p>➜  gcdTestForGit git:(master) ✗ git commit -m &lsquo;submit-git-test-10&rsquo;
+➜  gcdTestForGit git:(master) ✗ git commit -m 'submit-git-test-10' 
 [master 95552e2] submit-git-test-10
 ➜  gcdTestForGit git:(master) gi status
 zsh: command not found: gi
 ➜  gcdTestForGit git:(master) git status
 On branch master
-Your branch is ahead of &lsquo;origin/master&rsquo; by 3 commits.
-  (use &ldquo;git push&rdquo; to publish your local commits)
+Your branch is ahead of 'origin/master' by 3 commits.
+  (use "git push" to publish your local commits)
 nothing to commit, working directory clean
 ➜  gcdTestForGit git:(master) git push origin master
 Counting objects: 5, done.
@@ -435,32 +468,37 @@ Delta compression using up to 8 threads.
 Compressing objects: 100% (5/5), done.
 Writing objects: 100% (5/5), 545 bytes | 0 bytes/s, done.
 Total 5 (delta 2), reused 0 (delta 0)
-To git分支  master -> master
-➜  gcdTestForGit git:(master)
-远程分支合并后的结果如下：</p>
+To git分支  master -&gt; master
+➜  gcdTestForGit git:(master) 
+</code></pre>
 
-<p>删除远程分支
-git push [远程名] :[分支名]    ／／其实它是省略了《git push [远程名] [本地分支]:[远程分支]》命令中的本地分支。即提取一个空白的本地分支到远程分支。所有一定要注意这个两个命令的区别。使用git push命令做提交操作时一定要注意，如果写了（：），一定要加本地分支名</p>
+<h3>删除远程分支</h3>
 
-<p>问题：如果某个本地分支没有与远程分支关联，（在master分支下，好像默认跟踪的master，还是），可以push到别的远程仓库吗？
-如下：在master下创建一个分支，在本地做修改并且做了commit提交，但是没有push。
-然后把它push到别的远程分支会是什么情况？
-➜  gcdTestForGit git:(test-local-branch) git push origin test-local-branch:new-remote-branch
+<p>git push [远程名] :[分支名]<br/>
+  其实它是省略了《git push [远程名] [本地分支]:[远程分支]》命令中的本地分支。即提取一个空白的本地分支到远程分支。所有一定要注意这个两个命令的区别。使用git push命令做提交操作时一定要注意，如果写了（：），一定要加本地分支名</p>
+
+<p>问题：如果某个本地分支没有与远程分支关联，（在master分支下，好像默认跟踪的master，还是），可以push到别的远程仓库吗？<br/>
+如下：在master下创建一个分支，在本地做修改并且做了commit提交，但是没有push。<br/>
+然后把它push到别的远程分支会是什么情况？</p>
+
+<pre><code>➜  gcdTestForGit git:(test-local-branch) git push origin test-local-branch:new-remote-branch
 Counting objects: 4, done.
 Delta compression using up to 8 threads.
 Compressing objects: 100% (4/4), done.
 Writing objects: 100% (4/4), 363 bytes | 0 bytes/s, done.
 Total 4 (delta 3), reused 0 (delta 0)
-remote:
+remote: 
 remote: Create pull request for new-remote-branch:
 remote:   git分支
-remote:
+remote: 
 To git地址
-   103f55f..852a6ea  test-local-branch -> new-remote-branch
-➜  gcdTestForGit git:(test-local-branch)
-结果：test-local-branch分支变成了跟踪new-remote-branch远程分支的一个本地分支
-并且切换到远程分支new-remote-branch中，可以看到在本地test-local-branch分支中做的修改，说明push成功了。
-结论：在本地创建一个分支的时候，（跟踪某个远程分支的作用是可以fetch／pull这个远程分支的数据，不跟踪貌似也能拉取它的数据，所以我觉得本地分支和远程分支在push之前好像没有很大联系），在push操作之前，一定要对远程分支进行fetch／pull的操作拉取新的更新数据，然后push。
+   103f55f..852a6ea  test-local-branch -&gt; new-remote-branch
+➜  gcdTestForGit git:(test-local-branch) 
+</code></pre>
+
+<p>结果：test-local-branch分支变成了跟踪new-remote-branch远程分支的一个本地分支
+并且切换到远程分支new-remote-branch中，可以看到在本地test-local-branch分支中做的修改，说明push成功了。<br/>
+结论：在本地创建一个分支的时候，（跟踪某个远程分支的作用是可以fetch／pull这个远程分支的数据，不跟踪貌似也能拉取它的数据，所以我觉得本地分支和远程分支在push之前好像没有很大联系），在push操作之前，一定要对远程分支进行fetch／pull的操作拉取新的更新数据，然后push。<br/>
 好像push fetch pull的时候都不会出现冲突（push就是把本地的覆盖远程的，fetch／pull远程覆盖本地的），只有merge的时候才会有冲突。</p>
 
 <p>所以在做项目时应该是每个人创建属于自己的远程分支（所以push都只覆盖自己），然后某个人去把这个远程分支进行merge时再去解决冲突。最后可能就把merge后的分支再与主远程分支merge
