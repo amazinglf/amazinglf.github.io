@@ -95,7 +95,7 @@
 <th>           </th>
 <th style="text-align:center;"> OC           </th>
 <th style="text-align:right;"> CoreFoundation  </th>
-<th>  备注  </th>
+<th style="text-align:right;">  备注  </th>
 </tr>
 </thead>
 <tbody>
@@ -103,13 +103,13 @@
 <td> 获取主线称RunLoop   </td>
 <td style="text-align:center;"> [NSRunLoop mainRunLoop]       </td>
 <td style="text-align:right;"> CFRunLoopGetMain() </td>
-<td>   主线程的RunLoop是系统默认创建好的 </td>
+<td style="text-align:right;">   主线程的RunLoop是系统默认创建好的 </td>
 </tr>
 <tr>
 <td> 获取非主线程runloop      </td>
 <td style="text-align:center;"> [NSRunLoop currentRunLoop]      </td>
 <td style="text-align:right;"> CFRunLoopGetCurrent()   </td>
-<td>  非主线程runloop需要在用户主动获取时才会创建 </td>
+<td style="text-align:right;">  非主线程runloop需要在用户主动获取时才会创建 </td>
 </tr>
 </tbody>
 </table>
