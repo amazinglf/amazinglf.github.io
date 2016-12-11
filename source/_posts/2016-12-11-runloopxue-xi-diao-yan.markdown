@@ -1,21 +1,20 @@
 ---
 layout: post
 title: "Runloop学习调研"
-date: 2016-11-07 15:45:29 +0800
+date: 2016-12-11 16:32:17 +0800
 comments: true
 categories: 
 ---
+
+
 ###1、RunLoop与线程关系
 
-|  标题         | OC           | CoreFoundation  |  备注  |
-| -------------|:-------------:| -----:| -----:|
-| 获取主线称RunLoop   | [NSRunLoop mainRunLoop]       | CFRunLoopGetMain() |   主线程的RunLoop是系统默认创建好的 |
-| 获取非主线程runloop      | [NSRunLoop currentRunLoop]      | CFRunLoopGetCurrent()   |  非主线程runloop需要在用户主动获取时才会创建 |
+![Alt text](../images/runloop3.png)   
 
- 注意：CoreFoundation中方法是线程不安全的，而OC中方法是线程安全的，且OC方法是对CoreFoundation中方法的封装。  
- 原理：从上面的表格可以看出，线程和RunLoop是息息相关的，即线程和RunLoop是一一对应的关系，从获取RunLoop的   源码(https://opensource.apple.com/source/CF/CF-1151.16/CFRunLoop.c.auto.html)可以看出，它是通过一个字典来实现线程和RunLoop之前一一对应关系的，  
- _
+ 原理：从上面的表格可以看出，线程和RunLoop是息息相关的，即线程和RunLoop是一一对应的关系，从获取RunLoop的   源码(https://opensource.apple.com/source/CF/CF-1151.16/CFRunLoop.c.auto.html)可以看出，它是通过一个字典来实现线程和RunLoop之前一一对应关系的，<!--more-->  
+
  ![Alt text](../images/runloop1.png)   
+ 注意：CoreFoundation中方法是线程不安全的，而OC中方法是线程安全的，且OC方法是对CoreFoundation中方法的封装。使用CoreFoundation方法在保证线程安全的同时，要注意保证其不存在内存泄露问题  
  
 ####启动RunLoop  
 
