@@ -84,100 +84,101 @@
   </header>
 
 
-<div class="entry-content"><h3 id="runloop">1、RunLoop与线程关系</h3>
+<div class="entry-content"><h3>1、RunLoop与线程关系</h3>
 
 <table>
-  <thead>
-    <tr>
-      <th>标题</th>
-      <th style="text-align: center">OC</th>
-      <th style="text-align: right">CoreFoundation</th>
-      <th style="text-align: right">备注</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>获取主线称RunLoop</td>
-      <td style="text-align: center">[NSRunLoop mainRunLoop]</td>
-      <td style="text-align: right">CFRunLoopGetMain()</td>
-      <td style="text-align: right">主线程的RunLoop是系统默认创建好的</td>
-    </tr>
-    <tr>
-      <td>获取非主线程runloop</td>
-      <td style="text-align: center">[NSRunLoop currentRunLoop]</td>
-      <td style="text-align: right">CFRunLoopGetCurrent()</td>
-      <td style="text-align: right">非主线程runloop需要在用户主动获取时才会创建</td>
-    </tr>
-  </tbody>
+<thead>
+<tr>
+<th>  标题         </th>
+<th style="text-align:center;"> OC           </th>
+<th style="text-align:right;"> CoreFoundation  </th>
+<th style="text-align:right;">  备注  </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td> 获取主线称RunLoop   </td>
+<td style="text-align:center;"> [NSRunLoop mainRunLoop]       </td>
+<td style="text-align:right;"> CFRunLoopGetMain() </td>
+<td style="text-align:right;">   主线程的RunLoop是系统默认创建好的 </td>
+</tr>
+<tr>
+<td> 获取非主线程runloop      </td>
+<td style="text-align:center;"> [NSRunLoop currentRunLoop]      </td>
+<td style="text-align:right;"> CFRunLoopGetCurrent()   </td>
+<td style="text-align:right;">  非主线程runloop需要在用户主动获取时才会创建 </td>
+</tr>
+</tbody>
 </table>
 
-<p>注意：CoreFoundation中方法是线程不安全的，而OC中方法是线程安全的，且OC方法是对CoreFoundation中方法的封装。<br />
- 原理：从上面的表格可以看出，线程和RunLoop是息息相关的，即线程和RunLoop是一一对应的关系，从获取RunLoop的   源码(https://opensource.apple.com/source/CF/CF-1151.16/CFRunLoop.c.auto.html)可以看出，它是通过一个字典来实现线程和RunLoop之前一一对应关系的，<br />
+
+<p> 注意：CoreFoundation中方法是线程不安全的，而OC中方法是线程安全的，且OC方法是对CoreFoundation中方法的封装。<br/>
+ 原理：从上面的表格可以看出，线程和RunLoop是息息相关的，即线程和RunLoop是一一对应的关系，从获取RunLoop的   源码(<a href="https://opensource.apple.com/source/CF/CF-1151.16/CFRunLoop.c.auto.html">https://opensource.apple.com/source/CF/CF-1151.16/CFRunLoop.c.auto.html</a>)可以看出，它是通过一个字典来实现线程和RunLoop之前一一对应关系的，<br/>
  _
  <img src="../images/runloop1.png" alt="Alt text" /></p>
 
-<h4 id="runloop-1">启动RunLoop</h4>
+<h4>启动RunLoop</h4>
 
-<p>主线程的RunLoop是默认启动运行的，非主线程的RunLoop在获取后，需要调用RunLoop的相关run方法或者直接往runloop中添加输入源、定时器、观察者等来启动。</p>
+<p>   主线程的RunLoop是默认启动运行的，非主线程的RunLoop在获取后，需要调用RunLoop的相关run方法或者直接往runloop中添加输入源、定时器、观察者等来启动。</p>
 
-<pre><code>	//相关的run方法
-	- (void)run;
-	- (void)runUntilDate:(NSDate *)limitDate;
-	- (BOOL)runMode:(NSRunLoopMode)mode beforeDate:(NSDate *)limitDate;
-	//给runloop添加定时器、输入源的方法
-	- (void)addTimer:(NSTimer *)timer forMode:(NSRunLoopMode)mode;
-	- (void)addPort:(NSPort *)aPort forMode:(NSRunLoopMode)mode;
-	//给runloop添加observer
-	    NSRunLoop* myRunLoop = [NSRunLoop currentRunLoop];
-	    CFRunLoopObserverContext  context = {0, self, NULL, NULL, NULL};
-	    CFRunLoopObserverRef    observer = CFRunLoopObserverCreate(kCFAllocatorDefault,
-	            kCFRunLoopAllActivities, YES, 0, &amp;myRunLoopObserver, &amp;context);
-	    if (observer)
-	    {
-	        CFRunLoopRef    cfLoop = [myRunLoop getCFRunLoop];
-	        CFRunLoopAddObserver(cfLoop, observer, kCFRunLoopDefaultMode);
-	    }
-	//观察者的回调方法
-	void MyRunLoopObserver(CFRunLoopObserverRef observer,
-	                       CFRunLoopActivity activity,
-	                       void* info)
-	{
-	    NSLog(@"INFO");
-	    switch (activity) {
-	        case kCFRunLoopEntry: {
-	            NSLog(@"即将进入Loop");
-	            break;
-	        }
-	        case kCFRunLoopBeforeTimers: {
-	            NSLog(@"即将处理Timmer");
-	            break;
-	        }
-	        case kCFRunLoopBeforeSources: {
-	            NSLog(@"即将处理Source");
-	            break;
-	        }
-	        case kCFRunLoopBeforeWaiting: {
-	            NSLog(@"即将进入休眠");
-	            break;
-	        }
-	        case kCFRunLoopAfterWaiting: {
-	            NSLog(@"刚从休眠中唤醒");
-	            break;
-	        }
-	        case kCFRunLoopExit: {
-	            NSLog(@"即将退出Loop");
-	            break;
-	        }
-	        case kCFRunLoopAllActivities: {
-	            NSLog(@"所有的状态");
-	            break;
-	        }
-	    }
-	}
+<pre><code>    //相关的run方法
+    - (void)run;
+    - (void)runUntilDate:(NSDate *)limitDate;
+    - (BOOL)runMode:(NSRunLoopMode)mode beforeDate:(NSDate *)limitDate;
+    //给runloop添加定时器、输入源的方法
+    - (void)addTimer:(NSTimer *)timer forMode:(NSRunLoopMode)mode;
+    - (void)addPort:(NSPort *)aPort forMode:(NSRunLoopMode)mode;
+    //给runloop添加observer
+        NSRunLoop* myRunLoop = [NSRunLoop currentRunLoop];
+        CFRunLoopObserverContext  context = {0, self, NULL, NULL, NULL};
+        CFRunLoopObserverRef    observer = CFRunLoopObserverCreate(kCFAllocatorDefault,
+                kCFRunLoopAllActivities, YES, 0, &amp;myRunLoopObserver, &amp;context);
+        if (observer)
+        {
+            CFRunLoopRef    cfLoop = [myRunLoop getCFRunLoop];
+            CFRunLoopAddObserver(cfLoop, observer, kCFRunLoopDefaultMode);
+        }
+    //观察者的回调方法
+    void MyRunLoopObserver(CFRunLoopObserverRef observer,
+                           CFRunLoopActivity activity,
+                           void* info)
+    {
+        NSLog(@"INFO");
+        switch (activity) {
+            case kCFRunLoopEntry: {
+                NSLog(@"即将进入Loop");
+                break;
+            }
+            case kCFRunLoopBeforeTimers: {
+                NSLog(@"即将处理Timmer");
+                break;
+            }
+            case kCFRunLoopBeforeSources: {
+                NSLog(@"即将处理Source");
+                break;
+            }
+            case kCFRunLoopBeforeWaiting: {
+                NSLog(@"即将进入休眠");
+                break;
+            }
+            case kCFRunLoopAfterWaiting: {
+                NSLog(@"刚从休眠中唤醒");
+                break;
+            }
+            case kCFRunLoopExit: {
+                NSLog(@"即将退出Loop");
+                break;
+            }
+            case kCFRunLoopAllActivities: {
+                NSLog(@"所有的状态");
+                break;
+            }
+        }
+    }
 </code></pre>
 
-<p>直接通过run方法启动RunLoop时需要注意，在适当的时机给RunLoop添加事件源（source／timer／port）来触发RunLoop一直运行，保证其不会随着线程退出而退出。这个适当的时机是指在当前非主线程还没有退出之前，给RunLoop添加了事件源（source／timer／por／performselecter方法等t）即可，添加事件源与调用run方法之间没有顺序的限制。只要保证是在当前这个非主线程执行过程中。同时在非线程执行perfomrslector，必须保证其它线程有一个活跃的runloop也是同样的道理 <br />
- 不通过run相关方法，直接创建定时器和输入源，也需要通过上面列出的方法添加到当前runlooop上<br />
+<p> 直接通过run方法启动RunLoop时需要注意，在适当的时机给RunLoop添加事件源（source／timer／port）来触发RunLoop一直运行，保证其不会随着线程退出而退出。这个适当的时机是指在当前非主线程还没有退出之前，给RunLoop添加了事件源（source／timer／por／performselecter方法等t）即可，添加事件源与调用run方法之间没有顺序的限制。只要保证是在当前这个非主线程执行过程中。同时在非线程执行perfomrslector，必须保证其它线程有一个活跃的runloop也是同样的道理 <br/>
+ 不通过run相关方法，直接创建定时器和输入源，也需要通过上面列出的方法添加到当前runlooop上<br/>
   通过下面的demo，在三种方式之间切换，可以验证上面的结论</p>
 
 <pre><code>@interface StartRunloopVC ()
@@ -205,7 +206,7 @@
 {
     NSLog(@"perform方法");
 }
- 
+
 - (void)touchesBegan:(NSSet&lt;UITouch *&gt; *)touches withEvent:(UIEvent *)event
 {
     NSLog(@"进入系统的下一次循环");
@@ -216,28 +217,29 @@
 
 <p>原理：内部源码实现实际是通过do while() 循环来实现的</p>
 
-<h4 id="runloop-2">退出RunLoop</h4>
+<h4>退出RunLoop</h4>
 
-<p>主线程的RunLoop是一直不会退出的，除非应用结束，非主线程RunLoop的退出有两种方式<br />
-（1）通过给RunLoop配置一个超时值，设置超时值的方式如下，此时就不能使用run了<br />
-- (void)runUntilDate:(NSDate *)limitDate;<br />
-- (BOOL)runMode:(NSRunLoopMode)mode beforeDate:(NSDate *)limitDate;</p>
+<p>主线程的RunLoop是一直不会退出的，除非应用结束，非主线程RunLoop的退出有两种方式<br/>
+（1）通过给RunLoop配置一个超时值，设置超时值的方式如下，此时就不能使用run了<br/>
+- (void)runUntilDate:(NSDate <em>)limitDate;<br/>
+- (BOOL)runMode:(NSRunLoopMode)mode beforeDate:(NSDate </em>)limitDate;</p>
 
 <pre><code>//在非主线程执行下面方法，doFireTimer方法执行10此之后，当前线程就退出了
 [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(doFireTimer) userInfo:nil repeats:YES];
 [runloop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:1]];
 </code></pre>
 
-<p>（2）通过调用 CFRunLoopStop 方法来退出，但是自己通过demo试了当前非主线程还是存在，好奇怪，官方文档说可以<br />
+<p> （2）通过调用 CFRunLoopStop 方法来退出，但是自己通过demo试了当前非主线程还是存在，好奇怪，官方文档说可以<br/>
   <img src="../images/runloop2.png" alt="Alt text" /></p>
 
-<h3 id="runloop-3">RunLoop的不同模式及模式切换</h3>
-<p>一个 RunLoop 包含若干个 Mode，每个 Mode 又包含若干个 Source/Timer/Observer，如下图示：http://cc.cocimg.com/api/uploads/20150528/1432798883604537.png</p>
+<h3>RunLoop的不同模式及模式切换</h3>
+
+<p>一个 RunLoop 包含若干个 Mode，每个 Mode 又包含若干个 Source/Timer/Observer，如下图示：<a href="http://cc.cocimg.com/api/uploads/20150528/1432798883604537.png">http://cc.cocimg.com/api/uploads/20150528/1432798883604537.png</a></p>
 
 <p>系统默认注册了5个Mode，其中NSDefaultRunLoopMode（kCFRunLoopDefaultMode）、NSEventTrackingRunLoopMode、NSRunLoopCommonModes（kCFRunLoopCommonModes）是比较常用的，其它的Mode一般是系统在使用。</p>
 
-<p>DefaultRunLoop：默认的mode，主线程相关的事件响应等都在defaultmode下<br />
-EventTrackingRunLoop：滑动界面，如scrollview的滑动监听在此mode下<br />
+<p>DefaultRunLoop：默认的mode，主线程相关的事件响应等都在defaultmode下<br/>
+EventTrackingRunLoop：滑动界面，如scrollview的滑动监听在此mode下<br/>
 CommonMode：默认包含了所有的mode，譬如想让定时器在界面滑动的时候也生效，可以将定时器添加到commommode下，而不是defaultmode</p>
 </div>
 

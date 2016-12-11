@@ -87,100 +87,101 @@
   </header>
 
 
-  <div class="entry-content"><h3 id="runloop">1、RunLoop与线程关系</h3>
+  <div class="entry-content"><h3>1、RunLoop与线程关系</h3>
 
 <table>
-  <thead>
-    <tr>
-      <th>标题</th>
-      <th style="text-align: center">OC</th>
-      <th style="text-align: right">CoreFoundation</th>
-      <th style="text-align: right">备注</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>获取主线称RunLoop</td>
-      <td style="text-align: center">[NSRunLoop mainRunLoop]</td>
-      <td style="text-align: right">CFRunLoopGetMain()</td>
-      <td style="text-align: right">主线程的RunLoop是系统默认创建好的</td>
-    </tr>
-    <tr>
-      <td>获取非主线程runloop</td>
-      <td style="text-align: center">[NSRunLoop currentRunLoop]</td>
-      <td style="text-align: right">CFRunLoopGetCurrent()</td>
-      <td style="text-align: right">非主线程runloop需要在用户主动获取时才会创建</td>
-    </tr>
-  </tbody>
+<thead>
+<tr>
+<th>  标题         </th>
+<th style="text-align:center;"> OC           </th>
+<th style="text-align:right;"> CoreFoundation  </th>
+<th style="text-align:right;">  备注  </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td> 获取主线称RunLoop   </td>
+<td style="text-align:center;"> [NSRunLoop mainRunLoop]       </td>
+<td style="text-align:right;"> CFRunLoopGetMain() </td>
+<td style="text-align:right;">   主线程的RunLoop是系统默认创建好的 </td>
+</tr>
+<tr>
+<td> 获取非主线程runloop      </td>
+<td style="text-align:center;"> [NSRunLoop currentRunLoop]      </td>
+<td style="text-align:right;"> CFRunLoopGetCurrent()   </td>
+<td style="text-align:right;">  非主线程runloop需要在用户主动获取时才会创建 </td>
+</tr>
+</tbody>
 </table>
 
-<p>注意：CoreFoundation中方法是线程不安全的，而OC中方法是线程安全的，且OC方法是对CoreFoundation中方法的封装。<br />
- 原理：从上面的表格可以看出，线程和RunLoop是息息相关的，即线程和RunLoop是一一对应的关系，从获取RunLoop的   源码(https://opensource.apple.com/source/CF/CF-1151.16/CFRunLoop.c.auto.html)可以看出，它是通过一个字典来实现线程和RunLoop之前一一对应关系的，<br />
+
+<p> 注意：CoreFoundation中方法是线程不安全的，而OC中方法是线程安全的，且OC方法是对CoreFoundation中方法的封装。<br/>
+ 原理：从上面的表格可以看出，线程和RunLoop是息息相关的，即线程和RunLoop是一一对应的关系，从获取RunLoop的   源码(<a href="https://opensource.apple.com/source/CF/CF-1151.16/CFRunLoop.c.auto.html">https://opensource.apple.com/source/CF/CF-1151.16/CFRunLoop.c.auto.html</a>)可以看出，它是通过一个字典来实现线程和RunLoop之前一一对应关系的，<br/>
  _
  <img src="../images/runloop1.png" alt="Alt text" /></p>
 
-<h4 id="runloop-1">启动RunLoop</h4>
+<h4>启动RunLoop</h4>
 
-<p>主线程的RunLoop是默认启动运行的，非主线程的RunLoop在获取后，需要调用RunLoop的相关run方法或者直接往runloop中添加输入源、定时器、观察者等来启动。</p>
+<p>   主线程的RunLoop是默认启动运行的，非主线程的RunLoop在获取后，需要调用RunLoop的相关run方法或者直接往runloop中添加输入源、定时器、观察者等来启动。</p>
 
-<pre><code>	//相关的run方法
-	- (void)run;
-	- (void)runUntilDate:(NSDate *)limitDate;
-	- (BOOL)runMode:(NSRunLoopMode)mode beforeDate:(NSDate *)limitDate;
-	//给runloop添加定时器、输入源的方法
-	- (void)addTimer:(NSTimer *)timer forMode:(NSRunLoopMode)mode;
-	- (void)addPort:(NSPort *)aPort forMode:(NSRunLoopMode)mode;
-	//给runloop添加observer
-	    NSRunLoop* myRunLoop = [NSRunLoop currentRunLoop];
-	    CFRunLoopObserverContext  context = {0, self, NULL, NULL, NULL};
-	    CFRunLoopObserverRef    observer = CFRunLoopObserverCreate(kCFAllocatorDefault,
-	            kCFRunLoopAllActivities, YES, 0, &amp;myRunLoopObserver, &amp;context);
-	    if (observer)
-	    {
-	        CFRunLoopRef    cfLoop = [myRunLoop getCFRunLoop];
-	        CFRunLoopAddObserver(cfLoop, observer, kCFRunLoopDefaultMode);
-	    }
-	//观察者的回调方法
-	void MyRunLoopObserver(CFRunLoopObserverRef observer,
-	                       CFRunLoopActivity activity,
-	                       void* info)
-	{
-	    NSLog(@"INFO");
-	    switch (activity) {
-	        case kCFRunLoopEntry: {
-	            NSLog(@"即将进入Loop");
-	            break;
-	        }
-	        case kCFRunLoopBeforeTimers: {
-	            NSLog(@"即将处理Timmer");
-	            break;
-	        }
-	        case kCFRunLoopBeforeSources: {
-	            NSLog(@"即将处理Source");
-	            break;
-	        }
-	        case kCFRunLoopBeforeWaiting: {
-	            NSLog(@"即将进入休眠");
-	            break;
-	        }
-	        case kCFRunLoopAfterWaiting: {
-	            NSLog(@"刚从休眠中唤醒");
-	            break;
-	        }
-	        case kCFRunLoopExit: {
-	            NSLog(@"即将退出Loop");
-	            break;
-	        }
-	        case kCFRunLoopAllActivities: {
-	            NSLog(@"所有的状态");
-	            break;
-	        }
-	    }
-	}
+<pre><code>    //相关的run方法
+    - (void)run;
+    - (void)runUntilDate:(NSDate *)limitDate;
+    - (BOOL)runMode:(NSRunLoopMode)mode beforeDate:(NSDate *)limitDate;
+    //给runloop添加定时器、输入源的方法
+    - (void)addTimer:(NSTimer *)timer forMode:(NSRunLoopMode)mode;
+    - (void)addPort:(NSPort *)aPort forMode:(NSRunLoopMode)mode;
+    //给runloop添加observer
+        NSRunLoop* myRunLoop = [NSRunLoop currentRunLoop];
+        CFRunLoopObserverContext  context = {0, self, NULL, NULL, NULL};
+        CFRunLoopObserverRef    observer = CFRunLoopObserverCreate(kCFAllocatorDefault,
+                kCFRunLoopAllActivities, YES, 0, &amp;myRunLoopObserver, &amp;context);
+        if (observer)
+        {
+            CFRunLoopRef    cfLoop = [myRunLoop getCFRunLoop];
+            CFRunLoopAddObserver(cfLoop, observer, kCFRunLoopDefaultMode);
+        }
+    //观察者的回调方法
+    void MyRunLoopObserver(CFRunLoopObserverRef observer,
+                           CFRunLoopActivity activity,
+                           void* info)
+    {
+        NSLog(@"INFO");
+        switch (activity) {
+            case kCFRunLoopEntry: {
+                NSLog(@"即将进入Loop");
+                break;
+            }
+            case kCFRunLoopBeforeTimers: {
+                NSLog(@"即将处理Timmer");
+                break;
+            }
+            case kCFRunLoopBeforeSources: {
+                NSLog(@"即将处理Source");
+                break;
+            }
+            case kCFRunLoopBeforeWaiting: {
+                NSLog(@"即将进入休眠");
+                break;
+            }
+            case kCFRunLoopAfterWaiting: {
+                NSLog(@"刚从休眠中唤醒");
+                break;
+            }
+            case kCFRunLoopExit: {
+                NSLog(@"即将退出Loop");
+                break;
+            }
+            case kCFRunLoopAllActivities: {
+                NSLog(@"所有的状态");
+                break;
+            }
+        }
+    }
 </code></pre>
 
-<p>直接通过run方法启动RunLoop时需要注意，在适当的时机给RunLoop添加事件源（source／timer／port）来触发RunLoop一直运行，保证其不会随着线程退出而退出。这个适当的时机是指在当前非主线程还没有退出之前，给RunLoop添加了事件源（source／timer／por／performselecter方法等t）即可，添加事件源与调用run方法之间没有顺序的限制。只要保证是在当前这个非主线程执行过程中。同时在非线程执行perfomrslector，必须保证其它线程有一个活跃的runloop也是同样的道理 <br />
- 不通过run相关方法，直接创建定时器和输入源，也需要通过上面列出的方法添加到当前runlooop上<br />
+<p> 直接通过run方法启动RunLoop时需要注意，在适当的时机给RunLoop添加事件源（source／timer／port）来触发RunLoop一直运行，保证其不会随着线程退出而退出。这个适当的时机是指在当前非主线程还没有退出之前，给RunLoop添加了事件源（source／timer／por／performselecter方法等t）即可，添加事件源与调用run方法之间没有顺序的限制。只要保证是在当前这个非主线程执行过程中。同时在非线程执行perfomrslector，必须保证其它线程有一个活跃的runloop也是同样的道理 <br/>
+ 不通过run相关方法，直接创建定时器和输入源，也需要通过上面列出的方法添加到当前runlooop上<br/>
   通过下面的demo，在三种方式之间切换，可以验证上面的结论</p>
 
 <pre><code>@interface StartRunloopVC ()
@@ -208,7 +209,7 @@
 {
     NSLog(@"perform方法");
 }
- 
+
 - (void)touchesBegan:(NSSet&lt;UITouch *&gt; *)touches withEvent:(UIEvent *)event
 {
     NSLog(@"进入系统的下一次循环");
@@ -219,28 +220,29 @@
 
 <p>原理：内部源码实现实际是通过do while() 循环来实现的</p>
 
-<h4 id="runloop-2">退出RunLoop</h4>
+<h4>退出RunLoop</h4>
 
-<p>主线程的RunLoop是一直不会退出的，除非应用结束，非主线程RunLoop的退出有两种方式<br />
-（1）通过给RunLoop配置一个超时值，设置超时值的方式如下，此时就不能使用run了<br />
-- (void)runUntilDate:(NSDate *)limitDate;<br />
-- (BOOL)runMode:(NSRunLoopMode)mode beforeDate:(NSDate *)limitDate;</p>
+<p>主线程的RunLoop是一直不会退出的，除非应用结束，非主线程RunLoop的退出有两种方式<br/>
+（1）通过给RunLoop配置一个超时值，设置超时值的方式如下，此时就不能使用run了<br/>
+- (void)runUntilDate:(NSDate <em>)limitDate;<br/>
+- (BOOL)runMode:(NSRunLoopMode)mode beforeDate:(NSDate </em>)limitDate;</p>
 
 <pre><code>//在非主线程执行下面方法，doFireTimer方法执行10此之后，当前线程就退出了
 [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(doFireTimer) userInfo:nil repeats:YES];
 [runloop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:1]];
 </code></pre>
 
-<p>（2）通过调用 CFRunLoopStop 方法来退出，但是自己通过demo试了当前非主线程还是存在，好奇怪，官方文档说可以<br />
+<p> （2）通过调用 CFRunLoopStop 方法来退出，但是自己通过demo试了当前非主线程还是存在，好奇怪，官方文档说可以<br/>
   <img src="../images/runloop2.png" alt="Alt text" /></p>
 
-<h3 id="runloop-3">RunLoop的不同模式及模式切换</h3>
-<p>一个 RunLoop 包含若干个 Mode，每个 Mode 又包含若干个 Source/Timer/Observer，如下图示：http://cc.cocimg.com/api/uploads/20150528/1432798883604537.png</p>
+<h3>RunLoop的不同模式及模式切换</h3>
+
+<p>一个 RunLoop 包含若干个 Mode，每个 Mode 又包含若干个 Source/Timer/Observer，如下图示：<a href="http://cc.cocimg.com/api/uploads/20150528/1432798883604537.png">http://cc.cocimg.com/api/uploads/20150528/1432798883604537.png</a></p>
 
 <p>系统默认注册了5个Mode，其中NSDefaultRunLoopMode（kCFRunLoopDefaultMode）、NSEventTrackingRunLoopMode、NSRunLoopCommonModes（kCFRunLoopCommonModes）是比较常用的，其它的Mode一般是系统在使用。</p>
 
-<p>DefaultRunLoop：默认的mode，主线程相关的事件响应等都在defaultmode下<br />
-EventTrackingRunLoop：滑动界面，如scrollview的滑动监听在此mode下<br />
+<p>DefaultRunLoop：默认的mode，主线程相关的事件响应等都在defaultmode下<br/>
+EventTrackingRunLoop：滑动界面，如scrollview的滑动监听在此mode下<br/>
 CommonMode：默认包含了所有的mode，譬如想让定时器在界面滑动的时候也生效，可以将定时器添加到commommode下，而不是defaultmode</p>
 </div>
   
@@ -270,40 +272,43 @@ CommonMode：默认包含了所有的mode，譬如想让定时器在界面滑动
   </header>
 
 
-  <div class="entry-content"><h3 id="section">1、概述</h3>
+  <div class="entry-content"><h3>1、概述</h3>
+
 <p>NSURL Loading System主要用来描述使用标准internet协议与server端交互，以及与URLs进行交互的基础框架类。它是一组类和协议的集合，允许你的app去获取URL指定的内容，核心类即NSURL，通过它使我们的app可以操作URLs以及URLs指向的资源。</p>
 
 <p>除了NSURL，这个基础框架还提供了包括加载URLs、上传数据到服务器、管理cookie存储、控制返回数据的缓存、处理证书存储和身份验证、编写自定义的协议扩展等一套丰富的功能集合。</p>
 
-<p>NSURL Loading System主要支持通过以下协议来获取相应资源，包括文件传输协议、超文本传输协议、超文本加密传输协议、本地文件url传输协议、Data URLs传输协议（ftp://   http://  https://  file:///  data://），同时支持代理服务器和socks网关。</p>
+<p>NSURL Loading System主要支持通过以下协议来获取相应资源，包括文件传输协议、超文本传输协议、超文本加密传输协议、本地文件url传输协议、Data URLs传输协议（<a href="ftp://">ftp://</a>   <a href="http://">http://</a>  <a href="https://">https://</a>  file:///  data://），同时支持代理服务器和socks网关。</p>
 
 <p>除了NSURL Loading System，iOS还支持其他API可以在其他应用如safari中打开网页等，即通过在UIApplication中使用openURL:打开相关URL，具体可参考UIApplication Class Reference.</p>
 
 <p>NSURL Loading System包含了一系列helper类来协助URL loading类完成加载过程和相关行为，主要可以分为以下5大类，即协议支持、身份验证与证书、cookie存储、配置管理、缓存管理，如下图链接</p>
 
-<p>https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/URLLoadingSystem/Art/nsobject_hierarchy_2x.png</p>
+<p><a href="https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/URLLoadingSystem/Art/nsobject_hierarchy_2x.png">https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/URLLoadingSystem/Art/nsobject_hierarchy_2x.png</a></p>
 
-<h3 id="url-loading">2、URL Loading</h3>
+<h3>2、URL Loading</h3>
 
 <p>URL Loading是在NSURL Loading System中通过url获取相关内容使用最普遍的一个类，你可以通过很多种方式获取相关内容，这依赖于你app的需求、app系统版本，以及你是否希望以文件的形式获取数据，还是以内存的形式获取。</p>
 
 <p>在iOS7及之后的版本，推荐使用NSURLSession API来执行URL请求，如果相应应用必须支持旧的版本，你可以通过NSURLConnectionx下载数据到内存，然后根据需要看是否将数据写入磁盘，或者使用NSURLDownload下载数据到磁盘文件，你选择的方法很大程度上依赖于你希望获取数据到内存还是磁盘文件。</p>
 
-<h3 id="nsurlsession">如何使用NSURLSession</h3>
+<h3>如何使用NSURLSession</h3>
+
 <p>概览：NSURLSession及其相关类主要提供了通过http实现下载功能的API。提供了包括支持请求认证、后台下载（app在没有运行状态、暂停状态下的一些）等功能。这些功能都通 过其代理方法获取。</p>
 
-<h3 id="nsurlsession-1">理解NSURLSession的基本概念</h3>
+<h3>理解NSURLSession的基本概念</h3>
 
 <p>一个session中tasks的行为依赖于三件事情：session的类型（依赖于创建时配置对象的类型），task的类型，当task创建的时候app是否在前台。</p>
 
-<h4 id="session">1.session的类型</h4>
+<h4>1.session的类型</h4>
+
 <p>Default sessions（默认）：与其它下载url的基础方法非常相似，使用了持久的基于磁盘的缓存，并且将认证信息存储到用户的keychain里面。</p>
 
 <p>Ephemeral sessions（短暂）：它不存储任何数据到磁盘，所有的缓存、认证信息等都存储在RAM 随机存取存储器中与session进行关联，当app的session失效时，它们会自动清除。</p>
 
 <p>Background sessions（后台）：与默认session非常相似，除了它需要使用一个单独的进程来处理所有的数据传输，并且它在某些方面存在着一些限制。</p>
 
-<h4 id="task">2.task的类型</h4>
+<h4>2.task的类型</h4>
 
 <p>data tasks：用于发送和接受NSData类型的对象，适用于与服务端的短暂频繁交互的客户端请求。返回的数据可以通过一个comletion handler block一定时间内的部分或者所有的数据。</p>
 
@@ -311,7 +316,7 @@ CommonMode：默认包含了所有的mode，譬如想让定时器在界面滑动
 
 <p>upload tasks：以file文件的形式上传数据，并且也支持app没有运行时的后台上传</p>
 
-<h4 id="section-1">3.后台数据传输的注意事项</h4>
+<h4>3.后台数据传输的注意事项</h4>
 
 <p>对于Background sessions，由于实际的数据传输是i通过一个进程来执行的，并且重新启动app的过程相对代价也很大，有很多features功能也不可用，因此会存在如下一些限制：</p>
 
@@ -340,11 +345,12 @@ CommonMode：默认包含了所有的mode，譬如想让定时器在界面滑动
 
 <p>对于使用NSURLSession的后台传输任务的例子，可以参考Simple Background Transfer.</p>
 
-<h3 id="section-2">生命周期及与代理的交互</h3>
+<h3>生命周期及与代理的交互</h3>
 
 <p>充分理解session的生命循环，对于处理NSURLSession相关的任务是非常有帮助，包括session怎样与它的代理交互，代理方法调用的顺序，如果server端返回一个重定向会发生什么，当你的app恢复一个错误的下载会发生什么，等等，关于NSURLSession生命周期的完整描述，参考Life Cycle of a URL Session</p>
 
-<h3 id="nscoping">NSCoping行为</h3>
+<h3>NSCoping行为</h3>
+
 <p>session和task对象都遵循如下的NSCoping协议：
 当你的app拷贝了一个session或者task对象，会返回一个同样的对象
 当你的app拷贝了一个configuration对象，会返回一个你可以独立修改的新的对象</p>
@@ -378,7 +384,7 @@ CommonMode：默认包含了所有的mode，譬如想让定时器在界面滑动
 
   <div class="entry-content"><p>入门</p>
 
-<h3 id="racsignal">一、信号RACSignal</h3>
+<h3>一、信号RACSignal</h3>
 
 <pre><code> 单个信号的创建方式
 （1）RACObserve观察成员变量值的信号，前提是该属性必须支持KVO
@@ -388,17 +394,17 @@ CommonMode：默认包含了所有的mode，譬如想让定时器在界面滑动
 （5）对信号进行链式和过滤生成一个新的信号
 
  组合信号
-  
+
  通过RACSignal的类方法combinelatest将上面的单个信号进行组合
-  
+
   基本概念和用法
-  
+
   信号的生命周期：RACSignal从创建到在block中发送sendNext sendCompleted.以及－对信号执行delay、等操作－被订阅者订阅subscribeNext subscribeCompleted的过程。类似于一个工厂，该工厂只有在消费者需要某个产品［somesignal subscribernext ］时，工厂才会去生产相应产品，即执行相应代码［subscriber sendnext：somedatat］，这样的信号被称为冷信号，还要一种热信号可以参考http://tech.meituan.com/tag/ReactiveCocoa#rd
-  
-  
+
+
   创建自定义的RACSignal，实现方式，
   Signal获取到数据后，会调用Subscriber的sendNext, sendComplete, sendError方法来传送数据给Subscriber，Subscriber自然也有方法来获取传过来的数据，如：[signal subscribeNext:error:completed]。可以这样理解，RACSignal需要传入一个实现RACSubscriber协议的类，并且会调用相应协议的方法sendNext...。而这些相应协议方法的实现在subscribeNext...等的block中，相当于subscribeNext...替换sendNext...协议方法的实现，改了一下方法名称，本质是在subscribeNext...封装的方法中对协议方法实现进行了一些处理。具体可参考后面的分析。
-  
+
   注意这个方法带有三个参数这样只要没有sendComplete和sendError，新的值就会通过sendNext源源不断地传送过来，举个简单的例子：
    RACSignal *signal = [RACSignal createSignal:^ RACDisposable * (id&lt;RACSubscriber&gt; subscriber) {
 NSLog(@"triggered");
@@ -415,11 +421,11 @@ NSLog(@"newName:%@", newName);
  [signal subscribeCompleted:^{
 NSLog(@"subscription %u", subscriptions);
  }];
- 
+
     如果有多个subscriber的订阅者，那么signal就会又一次被触发，控制台里会输出两次triggered。这或许是你想要的，或许不是。如果要避免这种情况的发生，可以使用 replay 方法，它的作用是保证signal只被触发一次，然后把sendNext的value存起来，下次再有新的subscriber时，直接发送缓存的数据。 并且当一个信号存在多个订阅者时，也有可能产生的副作用。譬如，在一个block中修改外面的__block变量的值，会对后面的订阅者获取到的这个值产生影响。
 </code></pre>
 
-<h3 id="section">二、相关实例代码</h3>
+<h3>二、相关实例代码</h3>
 
 <pre><code>// KVO
 [RACObserve(self, username) subscribeNext:^(id x) {
@@ -450,9 +456,9 @@ self.button.rac_command = [[RACCommand alloc] initWithSignalBlock:^RACSignal *(i
      NSLog(@"you touched YES");     
   } }]; 
   [alertView show];
-  
+
  （4）有了这些Category，大部分的Delegate都可以使用RAC来做。或许你会想，可不可以subscribe NSMutableArray.rac_sequence.signal，这样每次有新的object或旧的object被移除时都能知道，UITableViewController就可以根据dataSource的变化，来reloadData。但很可惜这样不行，因为RAC是基于KVO的，而NSMutableArray并不会在调用addObject或removeObject时发送通知，所以不可行。不过可以使用NSArray作为UITableView的dataSource，只要dataSource有变动就换成新的Array，这样就可以了。
- 
+
  （5）说到UITableView，再说一下UITableViewCell，RAC给UITableViewCell提供了一个方法：rac_prepareForReuseSignal，它的作用是当Cell即将要被重用时，告诉Cell。想象Cell上有多个button，Cell在初始化时给每个button都addTarget:action:forControlEvents，被重用时需要先移除这些target，下面这段代码就可以很方便地解决这个问题：
  [[[self.cancelButton
 rac_signalForControlEvents:UIControlEventTouchUpInside]
@@ -462,7 +468,7 @@ subscribeNext:^(UIButton *x) {
 }];
 </code></pre>
 
-<h3 id="racturple-racstream-racsubject--racscheduler-racsubscriber">三、RACTurple RACStream RACSubject  RACScheduler RACSubscriber</h3>
+<h3>三、RACTurple RACStream RACSubject  RACScheduler RACSubscriber</h3>
 
 <pre><code>  （1）在Objc下，输入输出的“值”都可以用id类型，遇到多个值的组合就用RACTurple
   （2）  RACStream作为一个描述抽象的父类，它定义的几个基本方法自己并没有实现，是由具体子类来实现，RACStream的两个子类分别是RACSignal和RACSequence，可以对应到下面的图进行理解。
@@ -475,7 +481,7 @@ RACSubject *subject = [self doRequest];
     NSLog(@"value:%@", value);
 }];
 }
- 
+
   - (RACSubject *)doRequest
  {
 RACSubject *subject = [RACSubject subject];
@@ -491,14 +497,14 @@ RACSubject *subject = [RACSubject subject];
 }] subscribeNext:^(id _){}];
 return subject;
  }
- 
+
  （4）对RACScheduler作用的理解，先 通过下面的文字了解了它的作用，还没有写具体代码
  RACScheduler是RAC里面对线程的简单封装，事件可以在指定的scheduler上分发和执行，不特殊指定的话，事件的分发和执行都在一个默认的后台线程里面做，大多数情况也就不用动了，有一些特殊的signal必须在主线程调用，使用-deliverOn：可以切换调用的线程。
 订阅者执行时的block一定非并发执行，也就是说不会执行到一半被另一个线程进入，也意味着写subscribeXXX block的时候没必要做加锁处理            However, RAC guarantees that no two signal events will ever arrive concurrently. While an event is being processed, no other events will be delivered. The senders of any other events will be forced to wait until the current event has been handled.
 
  (5) RACSubscriber是定义的一个协议，参照博客http://nathanli.cn/2015/08/27/reactivecocoa2-%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/的内容，对它理解的更加深入，自己总结如下：
   RACSubscriber协议定义了sendNext sendError sendCompleted 等方法，首先明白协议使用的两个条件：1 有类实现了协议的方法 2 其他类中定义了协议对象，调用了协议的方法。在源码中的体现就是RACSignal里面（创建方法等方法中）封装了对这个协议方法的调用，在RACSignal的订阅方法subscriber中传入一个实现了协议方法RACSubscriber的对象。即外部要订阅这个信号就必须实现RACSubscriber协议中的方法，实际就是对订阅的值进行处理（在一层协议方法中在嵌套一层协议方法）。  其次源码对实现协议中方法的对象进行了一些封装，将协议方法的实现转化为block。更进一步将前面封装的block实现的类作为RACSignal的一个分类方法，这样对外部隐藏RACSubscriber，直接对订阅值value进行一些处理。
-  
+
    - (void)nl_subscribeNext:(void (^)(id x))nextBlock error:(void (^)(NSError *error))errorBlock completed:(void (^)(void))completedBlock {
    NLSubscriber *subscriber = [NLSubscriber subscriberWithNext:nextBlock error:errorBlock completed:completedBlock];
   [self subscribe:subscriber];
@@ -511,11 +517,11 @@ return subject;
   *简单来说，就是由这个被订阅的信号来给订阅者 subscriber 发送 `sendNext:` 等消息。*/
    - (RACDisposable *)subscribe:(id&lt;RACSubscriber&gt;)subscriber;
    @end
-   
+
    在博客中完全从订阅者RACSubscriber （即先不考虑信号是怎么发送的）以及 设计模式的角度详细描述了它的实现过程，如下
    （1）定义了一个协议RACSubscriber ，申明它的三个方法sendNext sendError sendCompleted。定义一个实现这个协议方法的具体类，如NLSubscriber
    （2）在RACSignal的分类 (Subscription)中，定义一个subscribe方法，需要传入一个实现了RACSubscriber协议的类。如上面方框中代码所示。
-   
+
     通过上面两步，我们就可以简单的定义一个RACSignal 一个NLSubscriber，并且把NLSubscriber传给RACSignal分类 (Subscription)中的subscribe方法。
    但是这样有一个问题就是，如果有多个订阅者，每个订阅者都要创建一个类，实现RACSubscriber协议以及协议的方法。因为每个订阅者的实现方法有很多种，很难实现复用。对于在某些场景中，譬如某个算法的实现，它的实现方式只可能是固定的几种方式（或者说几种策略，可称为策略模式），我们可以通过这种方式去实现，但是对于多个订阅者的实现方式不能复用的情况，用上面的方法就不是很好。解决办法是使用block，将协议的实现方法用block来代替。
 </code></pre>
@@ -527,26 +533,29 @@ return subject;
    源码中在上面的基础之上，将通用类的初始化，以及传给subscribe方法的过程封装到了RACSignal的一个分类方法中，只需要在参数定义中把对应的block传递过去即可。对于用户来说只需要创建RACSignal对象，调用它的sendNext...等方法，同时调用subscribeNext...等方法完成前面调用方法的具体实现。并且后面有实现的情况下触发前面的调用，与这个相关的实现细节应该在RACSignal源码的具体实现中去分析。
 </code></pre>
 
-<h3 id="section-1">四、注意事项</h3>
+<h3>四、注意事项</h3>
 
 <pre><code>  （1）RAC 在应用中大量使用了 block，由于 Objective-C 语言的内存管理是基于 引用计数的，为了避免循环引用问题，在 block 中如果要引用 self，需要使用@weakify(self)和@strongify(self)来避免强引用。另外，在使用时应该注意 block 的嵌套层数，不恰当的滥用多层嵌套 block 可能给程序的可维护性带来灾难。
   （2）RAC在使用时有一些注意事项，可以参考官方的DesignGuildLines。
   （3）当一个signal被一个subscriber subscribe后，这个subscriber何时会被移除？答案是当subscriber被sendComplete或sendError时，或者手动调用[disposable dispose]。当subscriber被dispose后，所有该subscriber相关的工作都会被停止或取消，如http请求，资源也会被释放。
   （4）Signal events是线性的，不会出现并发的情况，除非显示地指定Scheduler。所以-subscribeNext:error:completed:里的block不需要锁定或者synchronized等操作，其他的events会依次排队，直到block处理完成。
   （5）Errors有优先权，如果有多个signals被同时监听，只要其中一个signal sendError，那么error就会立刻被传送给subscriber，并导致signals终止执行。相当于Exception。生成Signal时，最好指定Name, -setNameWithFormat: 方便调试。
-  （6）block代码中不要阻塞。 http://limboy.me/ http://blog.sunnyxx.com/tags/Reactive%20Cocoa%20Tutorial/
+  （6）block代码中不要阻塞。
 </code></pre>
+
+<p><a href="http://limboy.me/">http://limboy.me/</a>
+<a href="http://blog.sunnyxx.com/tags/Reactive%20Cocoa%20Tutorial/">http://blog.sunnyxx.com/tags/Reactive%20Cocoa%20Tutorial/</a></p>
 
 <p>进阶</p>
 
-<h3 id="rac">一、RAC原理</h3>
+<h3>一、RAC原理</h3>
 
 <pre><code>   关于原理性的知识应该在一开始学习的时候就要深刻理解的， 但是刚开始学总会好高骛远，总想着马上就会用了，其实虽然学会了一些简单的用法了，一到比较难的知识点理解起来就比较困难了，就是因为一开始没有理解它的根本原理。下面是经过RAC培训之后自己的总结。
-   
+
    RAC来源于FRP（函数式响应式编程）思想：随时间变化的数据流在这个思想的基础上还有ReactiveX By Microsoft，它的一些基本操作与RAC也是比较类似的，http://rxmarbles.com/ 
- 
+
    而RAC是通过订阅者的方式来控制数据流的开始时间点，结束时间点，并且通过一些方式对随时间变化的数据流做一些控制（过滤，整合等）。
-   
+
    比较常见的一种场景，对网络请求返回数据的订阅，如果是冷信号，会导致网络请求数据的操作执行多次，而如果是热信号，可能会产生一定的副作用或者数据不一致，感觉在这种有网络请求的场景下使用信号要特别注意。如何正确的使用它，防止它不犯错误。
 </code></pre>
 </div>
@@ -595,11 +604,11 @@ return subject;
 <p>1、基础数据类型（通常都是通过结构体或枚举类型定义的）</p>
 
 <pre><code> 常量定义 let  i ＝ 10，常量一般必须要赋一个初值
-  
+
  变量定义 var j : Int ，变量如果指定类型可以不赋初值,如果没有指定类型必须赋初始值
- 
+
  它们的共同特点就是可以不指定值的类型。如果没有指定类型编译器会根据你赋的值进行类型推断。
- 
+
  总结：Swift支持隐式类型推断，不支持隐式类型转换（把某种类型的值赋值给另一种类型的值）。
 </code></pre>
 
@@ -624,17 +633,17 @@ return subject;
 <p>5、集合数据类型</p>
 
 <pre><code>   数组：相同类型的数据在数组中连续排列，因为是有序，元素检索速度非常快（c语言数组定义）。Swift数组的定义与此类似，还是有很多差别。定义如下：var array1 : Array&lt;Int&gt; = ［1,2,3,4］,因为数组中元素类型定义为范型，我们可以定义为任意一种类型。 并且Swift的数组中可以放置任意类型的数据。通过设置它的类型为Any，如下：var array1 : Array&lt;Any&gt; = ［“hello”,2,3,4］，至于它为什么能存储不同数据类型，可以从数组的结构体定义以及存储上去找原因。并且Swift允许在结构体中声明方法，更符合面向对象思想。
-   
+
    数组操作：读数据，通过数组下标的方式，同样也要注意数组越界的问题。修改数据，前提数组是变量，可以通过append、insert等向数组中添加一个元素，或者以直接赋值的方式修改数组中某个元素，以及通过removeLast、removeAtIndex删除数组中的某个元素。
-   
+
    slice：一种与数组非常相似的集合类型，定义也差不多一样，和数组可以进行相互转换，如：Slice sli = array1[0...5] 通过区间运算符或者使用Slice的结构体方法定义 Slice sli = Slice(array1)，不能直接赋值
-   
+
    range：用来存放区间表达式的值，它的本质是结构体，它也支持泛型（即任意类型，但也必须遵守forwardindex协议），var range : Range&lt;int&gt; = 0...3 或者通过构造方法定义 var range2 : Range&lt;int&gt; = Range(start:0, end:3)，需要注意的是这里表示0，1，2，不包括3。而前面的定义包括3.
-   
+
    数组批量操作，前面讲的slice、range都是为数组的批量操作做准备的。
- 
+
    (1) 可以将range指定范围内的数替换成任意其他个范围内的数，var array1 = ［1,2,3,4］array1[0...1] = ［8,7,8,9]。最后得到的array1为:［8,7,8,9,3,4]。或者使用函数array1.replaceRange(Range(start:0, end:2), With:[8,7,8,9]).，实现和前面一样的结构
-   
+
    (2) 数组还可以通过复合的赋值运算符往数组中添加元素、数组、slice等，array1+=9 等价于 array1.append(9)，array1+＝[1,2,3]，array1+=slice，array1+=array2[0...5]
   数组遍历，第一种for in 快速枚举，第二种通过元组进行遍历
  for elem in array1{
@@ -686,9 +695,9 @@ return subject;
   default:
      println("不符合")
   ｝
-  
+
  let point = (10,10)
- 
+
   switch point ｛
    case (0,0) :
    println("坐标原点")
@@ -699,7 +708,7 @@ return subject;
   default :
    println("其他")
   ｝
-  
+
    swith point ｛
      case (let x ,10)
      println(x)
@@ -709,14 +718,14 @@ return subject;
      println("\(x):\(y)“）
     case let (x, y) where x == -y
     println("\(x):\(y)“）
-    
+
   //返回两个顶点的长和宽
   let po = (double, double) = (0,0)
   let p1 = (double, double) = (8,8)
   fun getlengthandwidth(p0:(double,double),     p1(double,double)) -&gt; (length:double, width:double) ｛
    return (abs(p0.0-p1.0), abs(p0.1-p1.1))
    }
-   
+
    let w = getlengthandwidth(p0, p1).width
    let h = getlengthandwidth(p0, p1).length
    //这里要通过名称访问元祖的某个元素，要定义返回值元组中每个元素的名称
@@ -737,7 +746,7 @@ return subject;
      print("hello");
     }
    test(1, second: 2)
-   
+
    如果想在调用函数的时候想省略第二个外部参数名，即加上下划线_即可
    如下所示
   func test(first:Int, _ second:Int)
@@ -746,7 +755,7 @@ return subject;
    }
   test(1, 2)
 
- 
+
  func divisionoperation(dividend a:double, divisor b:double) -&gt; double ｛
   return a/b
  }
@@ -760,11 +769,11 @@ return subject;
    a = b //这里会报错
    b = t
  }
- 
- 
+
+
      函数默认值参数概念：
      即对函数中的某个参数指定默认值，相应在调用时可以不给这个默认值参数赋值，有一个需要注意的：当带有缺省值或默认值的这样一个参数，如果只有一个参数名，内部参数名将作为外部参数名使用，因为调用函数，修改其参数默认值，必须使用其外部参数名，否则报错，因此，在函数默认值参数的定义中，如果只定义了内部参数名，没有定义外部参数名，编译器会把默认值参数的内部参数名当作外部参数名使用，这属于编译器做的一个优化，实例代码如8-2所示，注意：对比c++中默认参数必须写在函数参数列表最尾部，不能移到参数列表前面，但是swift中现在是可以的，即可以出现在参数列表的任一位置。
-  
+
     常量参数与变量参数概念：
     默认函数的参数是常量类型，即只可以读，不可以写或者进行修改操作，如图8-3的使用，编译器会报错，我们可以把它定义为var类型，就可以修改了inout参数的使用：主要用在输入输出函数中，首先看8-4的代码,调用 swap(x,y)之后，最后的输出结果x还是10，y还是28，我们一般会认为x y值应该变化，其实并没有，它实际执行是将10赋值给a，19赋值给b，实际只修改了a b，没有修改x y，在c语言中也同样存在这样的问题，c语言的处理方式是可以 传递x y变量的地址，相应在swap函数中申明a b为指针。但是swift中没有指针，因此引入了一个inout关键字，通过这个关键字修饰参数。改进后的代码如8-5所示：注意：调用swap函数使用&amp;符号不是c语言中取地址的含义，而是将x y变量赋值给函数a b参数。总结：如果我们希望一个函数能修改外部的变量，首先在函数定义时需把参数定义为inout，输入输出参数类型，其次传递实参时需在变量前面加一个&amp;的形式传递过去，等价于a是x的引用，b是y的引用，传递的时候是把x y整个变量都传递过去，而不只是传递变量对应的值10 28，通过&amp;x &amp;y与inout a inout b的配合，最终达到修改函数传递参数的目的。注意：符号&amp;后面不能直接跟一个具体值，需要传一个变量名。
 
@@ -772,7 +781,7 @@ return subject;
    let t = a
    a = b
    b =t }
- 
+
   var x = 10
   var y =  28
   swap(x,y)
@@ -780,7 +789,7 @@ return subject;
    let t = a
    a = b
    b =t }
- 
+
   var x = 10
   var y =  28
   swap(&amp;x,&amp;y)
@@ -803,12 +812,12 @@ return subject;
    return a-b
   }
  变参参数，即参数个数可以是不确定的，要实现变参参数，我们首先想到的可能是通过数组的形式实现，如8-6实例代码所示，在swift中对变参参数进行了定义，语法格式为，参数名：参数类型...  ,只需要修改变量类型，即在参数个数不确定，但是参数类型都是一致的情况下可以这样使用，即把它当作一个数组（集合），并且 在调用时不用传数组，而是像调用函数一样，传递任意个相应类型的参数，如8-7所示，函数实现不变，并且在调用函数时做一些修改即可。注意：变参函数中变参必须放在参数列表最后面。
- 
+
  函数类型：（参数、返回值类型）类型相同的函数定义如下：函数参数类型以及返回值类型都一样只是实现不一样。如8-8所示，可以将上面的两个函数抽象出公共的函数类型（int, int) -&gt; (int)，可以对这个函数类型做如下的一些定义。
  定义一个函数类型常量或变量：var calfunc: (int, int) -&gt; int = add，这样非常类似c语言中函数指针以及oc中的block，申明这样一个变量有一个好处即可以对它重新赋值，calfunc = sub println(calfunc(3,5)，此时得到是sub函数计算的结果。因为一个函数类型的变量非常灵活，它可以指向相同类型的其他函数，可以达到c语言中函数指针及oc中block一样的功能。
  函数类型作为一个参数，如8-9所示，将其关联。
 
- 
+
  func subcalfunc(a:int, b:int, #op:(int, int) -&gt; int) ｛
   return op(a, b)
 }
@@ -839,7 +848,7 @@ func choosefunc(#getmax:bool ) -&gt; (int, int) -&gt; (int)｛
    return a+b
   }   //有参闭包，
  println(add(3,5))
- 
+
 函数返回一个函数类型的返回值：当根据输入参数判断执行哪一个函数时使用，如8-10所示
 </code></pre>
 
@@ -857,7 +866,7 @@ for x in array{
 }
 print("")
 }
- 
+
   func bubbleSort(inout array:[Int]){
 let cnt:Int = array.count
 for var i = 1; i &lt; cnt ; i++ {
@@ -869,7 +878,7 @@ for var i = 1; i &lt; cnt ; i++ {
         }
     }}
  }
- 
+
  var array = [6,5,9,3,5,2,10]
  showArray(array)
  bubbleSort(&amp;array)
@@ -883,7 +892,7 @@ if a &gt; b {
     return 0
 }
 }
- 
+
  func bubbleSort2(inout array:[Int]){
 let cnt:Int = array.count
 for var i = 1; i &lt; cnt ; i++ {
@@ -921,14 +930,14 @@ if $0 &gt; $1 {
     return 0
 }
  })
- 
+
  sort($array,{
 return $0 &lt; $1
 })
  sort($array,{
   $0 &lt; $1
  })
- 
+
   9-6-1
   func bubbleSortFunc(inout array: [Int]){
 let cnt = array.count
@@ -960,13 +969,13 @@ return incFunc2
 
    闭包表达式的语法优化：
    为什么要优化，如何优化，借用swift强大的类型推断功能，实现闭包表达式类型优化，  （1）在函数中传递闭包表达式时省略类型，前提是函数申明中包含了闭包类型时，可以根据上下文推断，省略闭包参数类型及返回值类型。如9-5所示，（2）进一步优化，参数都可以省略，而是使用$0 $1来代替，如9-5下面所示
-   
+
   尾随闭包：
   由于闭包表达式主要用于函数回调，在函数调用时，为了表达更清楚，书写更方便，应该将闭包作为函数最后一个参数，即尾随闭包。当闭包的执行语句，只有单个return表达式的情况下，可以简写去掉return，如9-5下面的代码所示。
-   
+
    嵌套函数：
    在函数内部申明一个函数，并且这个内部函数只能在内部使用，即它的作用域是在内部函数左右开始，往下到它所在函数结束的位置，同时函数通过闭包捕获上下文的值也属于嵌套函数。如9-6所示，嵌套函数仅仅为它所在的函数服务，所以有一个优点就是可以让程序更直观更清楚。
-   
+
    闭包捕获值定义：
    嵌套／内部函数可以引用不是它自己而是它所在外部函数申明的变量或常量，因此我们需要研究它捕获的原则，捕获的行为。在9-6-2的实例代码中，定义了一个嵌套函数，我们知道在函数内部申明的局部变量它的作用域和生命周期只在调用函数的时候有效，函数调用结束就不生效了，但是在上面这种情况下，inc被返回的嵌套函数保留了，我们可以暂时理解为一个副本，这个过程可理解为一个上下文的捕获。从内存管理和函数调用栈的角度考虑，一般认为inc随着函数getIntFunc的调用结束已经没有了，但是嵌套函数中使用了inc局部变量，我们就称之为值捕获，从9-6-3的例子中，会发现每次调用这个函数，返回值都会加1，说明嵌套函数捕获mt后，相当于拷贝了mt的一个副本，会记录mt上一次的值，我们可以理解为mt相当于incFuc的一个全局变量，我猜想如果mt是self，不做保护措施，就会出现循环引用啦。
 
@@ -977,22 +986,22 @@ return incFunc2
 
    协议和扩展：
    主要使用关键字protocol和extension来进行定义，它的使用和oc语言差不多（在语法定义上有一些差别，并且swift继承某个类和使用协议的语法是一样的在 : 后面，感觉这样不是很好，只是推荐把父类写在前面），可以将协议名作为一种命名类型来使用的做法还不是很理解（现在理解了，可以把协议类型作为函数参数类型、返回值类型等用法，充分发挥协议的优势，可以灵活的创建和传递同一个方法的不同实现），文档上的例子也标注了这样使用的注意事项。为什么swift的协议中要申明属性呢，与以前只申明方法相比，申明属性有什么好处呢？通常理解实现了协议的类型，该类型中必须拥有协议中相应的属性和方法（即协议只关心必须要有某些属性和方法，不关心属性和方法的具体值和具体实现）。注意：在协议中使用class关键字申明的类属性和类方法，当枚举和结构体实现这个协议时，需要使用static关键字。且协议中的方法不支持默认参数值。
-   
+
   理解扩展的使用场景：在无法修改源代码，或者修改已有类不可行的情况下，需要对已有的类、结构体、枚举、协议等进行扩展。也可以对协议扩展以及补充某个类型为协议类型。
-   
-   
+
+
    枚举和机构体：
    枚举与其他语言的一个区别是它可以定义方法，并且它的语法也有了一些变化。文档上说结构体和类的一个最大区别是结构体是传值，类是传引用，这个概念跟我之前的理解好像有偏差， 还要多看看。
-   
-   
+
+
    对象和类：
    对类的定义类似c语言有构造器（有继承关系的情况下，会做以下几步，1、设置子类的属性值，2、调用父类的构造器，3、还可以改变父类定义的属性值等等）和析构函数，创建类的时候不需要标准根类，与oc语言的区别。子类重写父类的方法需要用override标记。可以在类中定义属性的getter和setter方法，注意它的语法格式。同时swift中还多了一个willset和didset的方法概念。方法与函数有一个重要区别，方法的参数名（除了第一个参数以外的其他参数名）需要在调用的时候显示说明，最后提到如何处理变量的可选值，看起来感觉有些怪，这个还要多看看。
 
    函数和闭包；
    可以通过元组让一个函数返回多个值。并且函数参数可以是一个可变参数（numbers: Int...) ，在函数内部使用时类似于数组。函数可以嵌套，可以作为另一个函数的返回值，可以作为另一个函数的参数。
-   
+
    可以使用{}来创建一个匿名闭包，使用in将参数和返回值类型申明与闭包函数体进行连接。闭包在很多种情景下可以进行一些简化，如单个语句的闭包可以省略参数返回值类型申明以及in关键字，
-   
+
    可以使用参数位置$0 $1来直接引用参数。当闭包作为某个函数的最后一个参数时，可以直接跟在括号后面。
 
 
@@ -1042,28 +1051,31 @@ return incFunc2
   <div class="entry-content"><p>一、SDWebImage库的组成</p>
 
 <pre><code>  1、通过UIImageView分类提供的常用方法
-  
+
   （1）在UIImageView (WebCache)分类提供的方法中，可以看到这些方法最终都调用了下面这个方法，在这个方法中封装了对图片进行缓存和异步下载的功能
   - (void)sd_setImageWithURL:(NSURL *)url placeholderImage:(UIImage *)placeholder options:(SDWebImageOptions)options completed:(SDWebImageCompletionBlock)completedBlock;
      在这个分类中还提供了与展示动画图片相关的API：- (void)sd_setAnimationImagesWithURLs:(NSArray *)arrayOfURLs;，即设置一组图片的url，并且以动画的形式展示。
-     
+
   （2）UIImageView (HighlightedWebCache)：这个分类提供了为UIImageView设置高亮图片时调用的方法，这些方法的实现与前面的分类方法类似。
   （3）UIView (WebCacheOperation) 以字典的形式存储与当前UIView相关的key和SDWebImageOperation，用来添加、移除、取消图片的key对应的operation。
   （4）NSData (ImageContentType) 根据image的NSData判断图片的类型
   （5）UIImage (GIF) 提供gif图片处理，以及图片缩放和裁剪的处理方法
   （6）UIImage (MultiFormat)  将通过NSData的分类方法得到的图片类型，进行不同处理
-  （7） UIButton (WebCache)  该分类与UIImageView (WebCache)分类的实现是类似的。   2、下面分析要实现上面分类方法中图片的缓存和异步下载功能要用到的几个核心类，及其功能
-  
-   SDWebImageManager：首先判断从内存缓存和硬盘缓存中查找url对应的图片是否存在，如果都不存在从网络异步下载图片，如果存在使用block进行回调。同时，如果是从网络下载图片，会对这个图片在内存和硬盘进行缓存，如果从硬盘缓存获取也会保存到内存。
-   
+  （7） UIButton (WebCache)  该分类与UIImageView (WebCache)分类的实现是类似的。
+</code></pre>
+
+<p>  2、下面分析要实现上面分类方法中图片的缓存和异步下载功能要用到的几个核心类，及其功能</p>
+
+<pre><code>   SDWebImageManager：首先判断从内存缓存和硬盘缓存中查找url对应的图片是否存在，如果都不存在从网络异步下载图片，如果存在使用block进行回调。同时，如果是从网络下载图片，会对这个图片在内存和硬盘进行缓存，如果从硬盘缓存获取也会保存到内存。
+
    SDImageCache：具体实现前面SDWebImageManager中从内存缓存和硬盘缓存查找图片，以及保存缓存图片等功能，使用了NSCache以key－value的形式实现缓存功能，以图片的url作为缓存的key，当内存不足时会清除缓存图片。相对于字典缓存，它有下面几个优势
-   
+
   SDWebImageDownloader：提供异步下载图片功能，当缓存中不存在的情况下，并且使用了imageIO来实现图片的渐进加载。
-  
+
   SDWebImageDownloaderOperation：封装异步下载网络请求的相关功能。
-  
+
   SDWebImageDecoder：异步对NSData类型的数据进行解压操作，为了避免UIImage的imageWithData函数在画图的时候对Data进行解压消耗内存，提前进行解压操作，以消耗存储空间提高执行时间和效率。
-  
+
   SDWebImagePrefetcherDelegate 以预先下载图片，方便后续使用，具体差别还需要仔细看一下源码
 </code></pre>
 
@@ -1079,18 +1091,21 @@ return incFunc2
 <pre><code>1、使用分类为类扩展更多的功能，让使用者使用图片异步加载就好像直接为UIImageView设置image一样，通过一个图片设置方法就封装了很多功能
 2、面向对象编程和面向协议编程的有效结合
 3、使用了以空间换时间的一些性能优化策略
-4、使用imageIO结合URLConnnection，实现相应代理，每次接收到数据时更新图片 四、SDWebImage的使用和扩展
+4、使用imageIO结合URLConnnection，实现相应代理，每次接收到数据时更新图片
+</code></pre>
 
-   如果我们要在下载图片的过程中实现一些其他自定义的功能，可以通过覆写他提供的一些方法来实现
+<p>四、SDWebImage的使用和扩展</p>
+
+<pre><code>   如果我们要在下载图片的过程中实现一些其他自定义的功能，可以通过覆写他提供的一些方法来实现
    pod search SDWebImage 搜索到现在版本为：pod 'SDWebImage', '~&gt; 3.7.3'
    关于图片更深入的学习，可参考：http://blog.cnbang.net/tech/2578/
- 
+
    学习完上面这篇文章后对里面一些知识点还有些不理解，需要自己去求证。
    如：内核缓冲区（高速／低速缓存） 与 用户空间（内存）区别，
    虚拟内存（从硬盘上开辟的一块空间） 和 内存的区别。
    字节对齐（以c语言中的结构体为例，结构体中元素类型可能有多种，如int  float，我们应该以所占位数最大的float类型为标准，给int元素也分配这么大的空间，这样保证struct的所以类型大小都是一样大，并且是对齐的。这样在一片连续空间中查找结构体的各个元素时，只需要按固定大小查找即可，如果不对齐，就需要一个一个判断大小之后再取）。
     那上面讲的位图图像数据会出现多种不对齐的数据吗
-    
+
 
 
  FastImageCache引伸阅读
@@ -1129,16 +1144,19 @@ return incFunc2
 
   <div class="entry-content"><p>1、cocoapods概念</p>
 
-<pre><code>   用来方便的统一管理项目中引用的第三方库的工具，它的原理是将所有第三方的依赖库放到https://github.com/CocoaPods/Specs远程仓库的pods项目中，让使用cocoapods的项目依赖这 个pods 项目来管理它所引用的第三方库，即使用这个工具将本地项目对第三方库管理的职责转移出去。 2、cocoapods安装和使用
+<pre><code>   用来方便的统一管理项目中引用的第三方库的工具，它的原理是将所有第三方的依赖库放到https://github.com/CocoaPods/Specs远程仓库的pods项目中，让使用cocoapods的项目依赖这 个pods 项目来管理它所引用的第三方库，即使用这个工具将本地项目对第三方库管理的职责转移出去。
+</code></pre>
 
-安装常用命令如下：
+<p>2、cocoapods安装和使用</p>
+
+<pre><code>安装常用命令如下：
 ruby -v    //查看当前ruby的版本
 sudo gem update --system //升级gem
 gem sources -l    //查看ruby镜像的位置，看是否指向http://   ruby.taobao.org/，具体原因可打开链接
 sudo gem install cocoapods   //下载安装CocoaPods
 pod setup
- 
- 
+
+
 使用方法：
   （1）终端中，cd到项目总目录，创建podfile文件，指定项目需要依赖的第三方库
   （2）使用pod search &lt;&gt;命令,可以预先查找自己需要的第三方库资源
@@ -1161,30 +1179,30 @@ pod setup
 <p>5、创建cocoapods私有库方法</p>
 
 <pre><code>   通过cocoapods创建自己的私有库，在公司内部供其他项目使用，首先需要具备如下条件：
-   
+
   （1）创建一个私有的git远程仓库，类似于cocoapods的https://github.com/CocoaPods/Specs仓库，它的作用就是用于存放依赖库的podspec文件，称之为Spec Repo。然后在本地把这个仓库 添加为一个pod repo，在终端执行如下命令：
    pod repo add LFSpecs ssh://git@git.XXX.com/~liangfang/lfspecs.git,其中LFSpecs是指定的私有repo的名字，命令执行成功后，就可以在本地的~/.cocoapods/repos目录 下，看到添加的这个repo的文件夹(这里还看不到文件夹下相应的podspec文件,因为还没有push相应文件)，其他人如果要共用这个repo上传他们的库文件的话，执行相同的命令即可，即也可以在本地push自己的podspec文件。
-   
+
    （2）创建一个管理项目工程文件的版本控制地址，git仓库或者其他仓库地址都可以，用来存放依赖库实际代码的项目文件，方式一、使用自己已经创建好的现成的一个项目，push到这个版本 控制地址，方式二、使用pod提供的一个命令开始创建项目，如pod lib create LFPodTestLibrary，其中LFPodTestLibrary是指定的项目名字，然后再push到这个版本控制地址。这里主要考虑第一种方式的使用。具体步骤如下：
-   
+
      第一步：在本地创建一个工程项目PracticeForPodProject，cd到这个工程目录下，执行git init，添加一个远程管理仓库，提交代码到这个仓库
      git remote add origin ssh://git@git.XXX.com/~liangfang/customcreatepodproject.git
      git push origin master 
      这里需要注意的是要保证打开git网址直接打开工程项目的所有文件，不要在所有文件外面再包含一层文件夹，因为pod spec lint验证的时候会报找不到source file文件的错误。一开始我是先git clone远程仓库地址，然后在这个文件夹下创建新的工程文件，就会有一个以工程名命名的总文件夹，这样就出现上面一直验证不通过的问题。
-     
+
     第二步：创建一个podfile文件，如下所示，添加一些第三方依赖，保存后执行pod install, 成功之后，把相关修改提交到仓库。使用下面的命令给这个项目添加一个tag号：git tag -m “first release”  0.0.1 ,然后使用命令 git push —tags 来推送tag到远程仓库。
- 
+
 source 'https://github.com/CocoaPods/Specs.git'
 platform :ios, '9.0'
 pod 'ReactiveCocoa', '~&gt; 2.4.2'
 pod 'Mantle', '~&gt; 2.0.4'
 pod 'SVProgressHUD-0.8.1', '~&gt; 0.8'
 pod 'Masonry', '~&gt; 0.6.2'
- 
+
    第三步：给这个项目添加一个podspec文件，可使用如下命令进行创建：
    pod spec create PracticeForPodProject git地址。
    执行完后就创建了一个podsepc文件，指定git仓库地址,修改相关内容如下, 注意相关信息与前面定义的保持一致，在本地工程主目录下，创建Pod文件夹，以及Pod下的Classes Assets子文件夹，存放相关测试的.h .m 文件。同时从其他项目拷贝一个license文件和readme.md到当前工程主目录下。保存修改的podspec文件，将前面的所以修改先提交到远程仓库，尤其是添加的文件夹以及使用最新的tag号指向你提交到远程的最新版本，然后执行pod lib lint 以及 pod spec lint PracticeForPodProject.podspec .查看验证是否通过，可以加上--no-clean查看具体信息。
-   
+
  Pod::Spec.new do |s|
  s.name         = "PracticeForPodProject"
  s.version      = "0.0.1"
@@ -1205,28 +1223,28 @@ pod repo push LFSpecs PracticeForPodProject.podspec //LFSpecs即为前面创建�
  提交成功之后，就可以在本地~/.cocoapods/repos目录下以及LFSpecs对应的远程仓库上找到相应podspec文件。通过pod search PracticeForPodProject也可以找到相应工程信息。
 
  第五步：修改本地的podfile加上如下语句，执行pod install，再重新打开项目工程，就可以看到前面创建的Pods/Classes/.h .m,已经存放到Pods工程的Development Pods/PracticeForPodProject目录下了。每次在Pods工程下新添加了文件，主要要提交到远程仓库。操作方式与前面类似，方便其他项目对他的依赖。
- 
+
   source 'ssh://git@git.XXX.com/~liangfang/lfspecs.git'
   pod "PracticeForPodProject", :path =&gt; "PracticeForPodProject.podspec"
- 
- 
+
+
    （3）下面在一个本地的其他项目中，来测试上面的项目是否可以通过cocoapods来使用，可通过在podfile文件中添加如下语句，如下所示：执行pod install ，再打开项目就可以在Pods工程中的Pods目录下找到依赖的本地的PracticeForPodProject工程
- 
+
 source 'ssh://git@git.XXX.com/~liangfang/lfspecs.git'
 pod "PracticeForPodProject", :git =&gt; 'ssh://git@git.XXX.com/~liangfang/customcreatepodproject.git', :commit =&gt; 'd2804be542c'
- 
+
    （4） 在其他项目中也可以通过 pod ‘PracticeForPodProject’, ‘~&gt;1.0’ 来直接添加了
    （5）关于cocoapods的subspec属性的使用，后面再添加,如果修改了pod里面已存在的文件，不需要pod install，如果新添加了文件需要pod install.
 </code></pre>
 
 <p>参考链接</p>
 
-<p>http://objccn.io/issue-6-4/
-http://guides.cocoapods.org/syntax/podfile.html
-http://www.cocoachina.com/ios/20150916/13384.html
-http://blog.wtlucky.com/blog/2015/02/26/create-private-podspec/
-http://blog.devtang.com/blog/2014/05/25/use-cocoapod-to-manage-ios-lib-dependency/
-https://guides.cocoapods.org/</p>
+<p><a href="http://objccn.io/issue-6-4/">http://objccn.io/issue-6-4/</a>
+<a href="http://guides.cocoapods.org/syntax/podfile.html">http://guides.cocoapods.org/syntax/podfile.html</a>
+<a href="http://www.cocoachina.com/ios/20150916/13384.html">http://www.cocoachina.com/ios/20150916/13384.html</a>
+<a href="http://blog.wtlucky.com/blog/2015/02/26/create-private-podspec/">http://blog.wtlucky.com/blog/2015/02/26/create-private-podspec/</a>
+<a href="http://blog.devtang.com/blog/2014/05/25/use-cocoapod-to-manage-ios-lib-dependency/">http://blog.devtang.com/blog/2014/05/25/use-cocoapod-to-manage-ios-lib-dependency/</a>
+<a href="https://guides.cocoapods.org/">https://guides.cocoapods.org/</a></p>
 </div>
   
   
@@ -1255,7 +1273,7 @@ https://guides.cocoapods.org/</p>
   </header>
 
 
-  <div class="entry-content"><h3 id="xcodexctest">1、XCode自带XCTest框架了解</h3>
+  <div class="entry-content"><h3>1、XCode自带XCTest框架了解</h3>
 
 <pre><code>   （1）创建一个工程，会自动为你创建一个单元测试的target，特点：文件名都是以tests结尾
    （2）分析一下X...XTests.m文件的内容，首先该类继承自XCTestsCase类，并且有三个方法，它们各自的功能如下：
@@ -1267,29 +1285,29 @@ https://guides.cocoapods.org/</p>
     （4）也可以新建其他Objective-C test case class的类来编写与上面类似方法的测试用例。
 </code></pre>
 
-<h3 id="kiwispecta">2、Kiwi和Specta单元测试框架的对比</h3>
+<h3>2、Kiwi和Specta单元测试框架的对比</h3>
 
 <pre><code>   首先知道这些框架在github上是可以找到的，与其他第三方库Masonry AFNetworking等框架的使用方式其实是差不多的。
-   
+
   （1）Specta (BDD框架) 
    Specta是基于XCTest进行封装的，使用Specta，需要依赖别的第三方库，因此还要再引入OCmock/OCMockito以及Expecta/OCHamcrest一起配合使用，但是一般都会引入OCMock 和OCHamcrest 这两个一起使用。再加上OHHTTPStubs(http stub打桩)框架，
-   
+
     目前主要使用Specta＋OCMock＋Expeata＋OHHTTPStubs结合的方式。其中各个框架的作用如下：
-     
+
     OCMock Or OCMockito ：这两个都是用来mock对象，Stub方法的，区别在于使用OCMock的库比OCMockito的库多，而且文档和教程更加丰富。mock测试就是在测试过程中，对于某些不容易构造或者不容易获取的对象，用一个虚拟的对象来创建以便测试的测试方法。mock对象,这个虚拟的对象就是mock对象。mock对象就是真实对象在调试期间的代替品。在实际工程中的使用，我的理解是由于在面向对象编程中，需要测试的某个类，往往又依赖于其他的类，而我们不想去真正创建这个类，调用这个类的某些方法，而是模拟mock出一个这样的依赖类，stub它的方法，指定相应方法的返回值。
-    
+
     Expecta Or OCHamcrest  ： 都是断言的扩展框架，Expecta不成熟，框架还有一些的问题。OCHamcrest更加成熟，而且可扩展性高，可以自定义自己的断言，更灵活。这是网上别人的观点，因为自己还没有尝试做很多实例代码，后面还有待完善。
- 
+
     OHHTTPStubs：在实际工程使用中主要用于测试model层在进行网络数据请求时，对接口返回数据的处理（数据解析）是否正确。同时用这个工具来模拟从网络请求返回的json数据，这样可以在本地对这个数据进行任意修改来测试，而不是真正去网络请求数据。https://github.com/AliSoftware/OHHTTPStubs
-    
+
  （2）Kiwi框架
- 
+
     Kiwi包含了Specta和OCmock以及Expeata所有的功能。
-    
+
    总结：对于常用的specta和wiki框架，我们可以根据需要进行选择，对于他们各自的优势，还要后面多测试和学习。注意这两个框架不能同时使用，因为网上有人测试，Kiwi与Specta是不能同时在项目中使用的，会Crash。
 </code></pre>
 
-<h3 id="section">3、框架的使用</h3>
+<h3>3、框架的使用</h3>
 
 <pre><code>http://www.bubuko.com/infodetail-1030528.html
 http://www.cocoachina.com/ios/20150731/12859.html
@@ -1311,7 +1329,7 @@ https://github.com/6david9/WWDC2015
   这个测试用例就是在说Given a Team,When newly created,it should have a name, and should have 11 players，基本上不需要注释就能知道在干嘛
 </code></pre>
 
-<p>结合之前做的基于MVVM框架些的代码，做了一个打桩的测试，大致实现过程</p>
+<p>  结合之前做的基于MVVM框架些的代码，做了一个打桩的测试，大致实现过程</p>
 
 <pre><code> （1）创建ADModelHTTPStub类（.h .m文件），定义打桩的方法，截取符合相应字符串的网络请求的url，对这个请求的url返回本地的一个json文件来模拟返回的数据，前提是在创建好json文件，存放返回的数据
    + (void)stubFetchADInfoSucceed{
@@ -1377,19 +1395,20 @@ context(@"", ^{
 SpecEnd
 </code></pre>
 
-<h3 id="section-1">4、其他相关</h3>
+<h3>4、其他相关</h3>
+
 <pre><code>（1）logit test与application test区别
    logit test类似于白盒测试，用于测试工程中较细节的逻辑，application test类似于黑盒测试，或者接口测试，用于测试直接与用户交互的接口（服务器接口返回的数据在客户端展示是否正常）
   logit test与application test的区别还表现在setUp方法上， logit test只需要在setUp方法中初始化一些测试数据，application test需要在setUp方法中获取主应用的AppDelegate,供test方法调用。这样是网上有人这么说的， 但是自己不太明白真正的原因，猜想是应用测试需要调用接口？
-  
+
    网上说要注意对于会侵入主应用的test bundle，在使用过程中要十分注意，不要让单元测试的资源覆盖主应用资源，否则会造成诡异的bug，我猜想这个可能就是要使用mock stub 等测试框架来模拟数据的原因，而不是直接使用主应用返回的数据。
-   
+
  (2) xcode现在也支持与ui操作相关的测试，可以参照网上别人的探索
  http://www.cocoachina.com/ios/20150702/12253.html
- 
+
 （3）RAC绑定相关测试的注意事项
   下面以一个登录页面文本输入框的绑定为例，摘录自网上实例。这里有一个关键点，emailTextField或passwordTextField必须调用sendActionsForControlEvents:UIControlEventEditingChanged方法，才能触发textField的text属性改变。
-  
+
   技巧：要找到相应调用方法需要通过查看对应控件的RAC源码中将通知（相应方法）转化为信号的处理过程。
   SPEC_BEGIN(LoginViewControllerSpec)
 
@@ -1440,7 +1459,7 @@ describe(@"Password Text Field", ^{
 });
 
  绑定的测试通过之后，可以进一步模拟绑定得到的数据，进行其他相关测试。
-  
+
 （4）写与MVVM框架相关的单元测试的方法
     model层：主要通过打桩测试网络请求返回的数据，通过订阅相应方法的signal返回的信号进行测试
     viewmodel层：主要执行相应commad，然后订阅command中被赋值的属性数据，进行测试
@@ -1451,15 +1470,16 @@ describe(@"Password Text Field", ^{
    [RACObserve(viewModel, sectionCollectionResults) subscribeNext:.... 或者
    [RACObserve(viewModel.sectionCollectionResults, objectsCount).....
    是需要取决于你要测试的代码，如果是在执行command返回时初始化sectionCollectionResults并添加元素，第一个可以订阅到信号。否则好似订阅不到的。需要通过下面的方式。
-   
+
    使用[RACObserve(viewModel.sectionCollectionResults, objectsCount).订阅时，又由于commad在返回结果时会对sectionCollectionResults先进行clearall操作。
 </code></pre>
 
-<h3 id="api">(5) 各个框架的api文档</h3>
-<p>https://github.com/specta/specta
-https://github.com/specta/expecta
-http://ocmock.org/reference/
-https://github.com/AliSoftware/OHHTTPStubs</p>
+<h3>(5) 各个框架的api文档</h3>
+
+<p><a href="https://github.com/specta/specta">https://github.com/specta/specta</a>
+<a href="https://github.com/specta/expecta">https://github.com/specta/expecta</a>
+<a href="http://ocmock.org/reference/">http://ocmock.org/reference/</a>
+<a href="https://github.com/AliSoftware/OHHTTPStubs">https://github.com/AliSoftware/OHHTTPStubs</a></p>
 </div>
   
   
@@ -1488,30 +1508,38 @@ https://github.com/AliSoftware/OHHTTPStubs</p>
   </header>
 
 
-  <div class="entry-content"><h2 id="mvvm">1、mvvm基本概念</h2>
+  <div class="entry-content"><h2>1、mvvm基本概念</h2>
 
-<pre><code>   在MVC框架的基础之上，将view和view controller联系在一起作为一个整体，同时新建一个视图模型层view model，负责view和view controller这个整体与model层之间的通信。同时将原来ViewController中放置用户输入验证逻辑、视图显示逻辑、发起网络请求和其他各种各样的耗时操作放到 view model中。在MVVM框架的基础之上，再结合RAC响应式编程，通过在控制器层对模型层数据的绑定，来实现界面与模型层之间的数据交换。 ##2、mvvm层次结构
+<pre><code>   在MVC框架的基础之上，将view和view controller联系在一起作为一个整体，同时新建一个视图模型层view model，负责view和view controller这个整体与model层之间的通信。同时将原来ViewController中放置用户输入验证逻辑、视图显示逻辑、发起网络请求和其他各种各样的耗时操作放到 view model中。在MVVM框架的基础之上，再结合RAC响应式编程，通过在控制器层对模型层数据的绑定，来实现界面与模型层之间的数据交换。
+</code></pre>
 
-     MVVM主要分为一下几层，
+<h2>2、mvvm层次结构</h2>
+
+<pre><code>     MVVM主要分为一下几层，
      model层：数据模型层
      view(view和view controller)层：显示自定义视图和和管理视图的控制器层
-     view model层：连接model层和view层之间的桥梁，主要负责一些业务逻辑操作 ##3、mvvm使用场景
+     view model层：连接model层和view层之间的桥梁，主要负责一些业务逻辑操作
+</code></pre>
 
-（1）结合RAC简化自定义view与model层之间数据交互在控制器中使用RAC、RACObserver宏对view中要展示数据与view model层获取的model层数据进行绑定。
+<h2>3、mvvm使用场景</h2>
+
+<pre><code>（1）结合RAC简化自定义view与model层之间数据交互在控制器中使用RAC、RACObserver宏对view中要展示数据与view model层获取的model层数据进行绑定。
   使用RACCommad来响应界面的交互，具体步骤如下：
   第一步：在自定义view中定义一个command，在子view点击操作中执行这个command，excute：可以看看官网文档上它的用法
-  
+
   第二步：在controlller中，把它与自定义view中的相应command进行绑定。在绑定的时候就实现这个commad的具体操作。
-  
+
   第三步：也可以在controlller中定义这个commad属性。在属性的set方法中返回它的具体实现，最后不能忘记还要对这个commad与自定义view中的相应command进行绑定。
-   
+
   第四步：commad的执行一般分以下几种状态：正在执行、执行失败、执行完（可以返回一个数据，但是一般通过修改某个与view进行绑定的数据之后，就可以自动通知view界面进行修改了，所有不返回数据也是可以的）
-  
+
   （2）将UITableView上的数据源（实现&lt;UITableViewDataSource&gt;协议及其方法的类）分离出来，放到vm层。这样使得代码逻辑更清晰，且更有利于做单元测试。如果设置M层，还可以对代码做进一步的改进。
-               实例代码如下所示：  VM层
+               实例代码如下所示：
+</code></pre>
 
+<p> VM层</p>
 
-//声明一个block类型
+<pre><code>//声明一个block类型
 typedef void (^TableViewCellConfigureBlock)(id cell, id item);
  //声明TableDataSource 类，实现UITableViewDataSource协议
 @interface TableDataSource : NSObject &lt;UITableViewDataSource&gt;
@@ -1534,13 +1562,13 @@ typedef void (^TableViewCellConfigureBlock)(id cell, id item);
  //block对象
  @property (nonatomic, copy) TableViewCellConfigureBlock configureCellBlock;
  @end
- 
+
  @implementation TableDataSource
  //自动生成get和set方法
  @synthesize items = _items;
  @synthesize cellIdentifier = _cellIdentifier;
  @synthesize configureCellBlock = _configureCellBlock;
- 
+
 
 
  - (id)init {
@@ -1558,23 +1586,23 @@ if (self) {
 }
 return self;
  }
- 
- 
+
+
 - (id)itemAtIndexPath:(NSIndexPath *)indexPath {
 return _items[(NSUInteger)indexPath.row];
 }
 </code></pre>
 
-<p>pragma mark - UITableViewDataSource</p>
+<p>   pragma mark - UITableViewDataSource</p>
 
 <pre><code>- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
 return 1;
  }
- 
+
  - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
 return [_items count];
  }
- 
+
  - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
 UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:_cellIdentifier];
 id item = [self itemAtIndexPath:indexPath];
@@ -1585,7 +1613,7 @@ id item = [self itemAtIndexPath:indexPath];
 self.configureCellBlock(cell, item);
 return cell;
 }
- 
+
 @end
 </code></pre>
 
@@ -1613,11 +1641,11 @@ self.dataSource = [[TableDataSource alloc] initWithItems:stringsArray
                                       ConfigureCellBlock:cellConfigureBlock];
 self.tableView.dataSource = _dataSource;
  }
- 
+
 @end
 </code></pre>
 
-<p>（3）下面的代码将用户登录的验证代码分离出来，但是应该不是完全的mvvm的模式，因为还是通过block进行的回调？还要多些代码体会理解
+<p>   （3）下面的代码将用户登录的验证代码分离出来，但是应该不是完全的mvvm的模式，因为还是通过block进行的回调？还要多些代码体会理解
               类似VM层</p>
 
 <pre><code>＃import &lt;Foundation/Foundation.h&gt;
@@ -1634,7 +1662,7 @@ typedef void (^RWSignInResponse)(BOOL);
   @implementation RWDummySignInService
  //具体实现，传入用户名和密码，调用block（设置block的参数，然后回调传入的blobk的实现代码，
  //block作为方法的参数，调用方法的时候一定要实现这个block，方法的实现是调用这个block
- 
+
  - (void)signInWithUsername:(NSString *)username password:(NSString *)password complete:(RWSignInResponse)completeBlock {
 double delayInSeconds = 2.0;
 //设置执行线程之前的等待时间,将前面的double类型进行一个转换
@@ -1653,8 +1681,8 @@ dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
 <pre><code> $import &lt;UIKit/UIKit.h&gt;
  @interface RWViewController : UIViewController
  @end
- 
- 
+
+
   #import "RWViewController.h"
   #import "RWDummySignInService.h"
   #import "ReactiveCocoa/ReactiveCocoa.h"
@@ -1664,12 +1692,12 @@ dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
   @property (weak, nonatomic) IBOutlet UIButton *signInButton;
  @property (weak, nonatomic) IBOutlet UILabel *signInFailureText;
  @property (strong, nonatomic) RWDummySignInService *signInService; //处理用户点击事件的接口（信号）
- 
+
  @end
- 
- 
+
+
  @implementation RWViewController
- 
+
  - (void)viewDidLoad {
   [super viewDidLoad];
  //下面是创建（有效状态信号），理解其含义的代码
@@ -1683,7 +1711,7 @@ RACSignal *validPasswordSignal = [self.passwordTextField.rac_textSignal map:^id(
 }];
 </code></pre>
 
-<p>//下面ReactiveCocoa定义的一些宏，感觉这个宏是把函数要返回的对象的属性都声明了，直接return就行了</p>
+<p> //下面ReactiveCocoa定义的一些宏，感觉这个宏是把函数要返回的对象的属性都声明了，直接return就行了</p>
 
 <pre><code>RAC(self.passwordTextField, backgroundColor) = [validPasswordSignal map:^id(NSNumber *passwordValid){
     return [passwordValid boolValue] ? [UIColor clearColor] : [UIColor yellowColor];
@@ -1694,7 +1722,7 @@ RAC(self.usernameTextField, backgroundColor) = [validUsernameSignal map:^id(NSNu
 }];
 </code></pre>
 
-<p>//一开始将下面的combinelatest的参数直接用text，一致报找不到方法的错误，然后马上跟断点进行调试。发现应该要转换成信号。才可以</p>
+<p>  //一开始将下面的combinelatest的参数直接用text，一致报找不到方法的错误，然后马上跟断点进行调试。发现应该要转换成信号。才可以</p>
 
 <pre><code>RAC(self.signInButton, enabled) = [RACSignal combineLatest:@[self.usernameTextField.rac_textSignal, self.passwordTextField.rac_textSignal] reduce:^id(NSString *name, NSString *password){
     return @(name.length &gt; 3 &amp;&amp; password.length&gt;3);
@@ -1712,7 +1740,7 @@ RAC(self.usernameTextField, backgroundColor) = [validUsernameSignal map:^id(NSNu
         [self performSegueWithIdentifier:@"signInSuccess" sender:self];
     }
     NSLog(@"sign in result :%@",signedIn);
-    
+
 }];
 
 
@@ -1763,36 +1791,42 @@ return [RACSignal createSignal:^RACDisposable *(id&lt;RACSubscriber&gt; subscrib
 
   <div class="entry-content"><p>1、RunTime（运行时）概念理解</p>
 
-<p>（1）函数调用方式</p>
+<p>   （1）函数调用方式</p>
 
-<pre><code>      OC的函数调用即通过在对象上调用方法，也称之为“传递消息”，相对于C语言函数调用，使用静态绑定，即在编译期就决定运行时所应调用的函数，OC则是通过动态绑定的方式，对所要调用的函数在运行期才能确定，即对象收到消息之后，究竟该调用哪个方法完全由运行期决定，并且可以在程序运行时改变，是一门真正的动态语言。    （2）函数调用（传递消息）过程 1
-   
-       函数调用过程即给对象发送消息的处理过程，以id returnValue = [someObject measageName:pameter] 消息为例：
+<pre><code>      OC的函数调用即通过在对象上调用方法，也称之为“传递消息”，相对于C语言函数调用，使用静态绑定，即在编译期就决定运行时所应调用的函数，OC则是通过动态绑定的方式，对所要调用的函数在运行期才能确定，即对象收到消息之后，究竟该调用哪个方法完全由运行期决定，并且可以在程序运行时改变，是一门真正的动态语言。
+</code></pre>
+
+<p>   （2）函数调用（传递消息）过程 1</p>
+
+<pre><code>       函数调用过程即给对象发送消息的处理过程，以id returnValue = [someObject measageName:pameter] 消息为例：
        编译期，编译器看到这行代码，会将其转换为一条标准的C语言函数调用，id returnValue = objc_msgSend(someObject, @selector(messageName:),  parameter);  如果在编译期向类发送了其无法解读的消息也不会报错，因为运行时可以继续向类中添加方法。
- 
+
        运行期，即动态消息派发系统执行过程，objc_msgSend函数会首先根据接收者（someObject）和选择子（measageName）的类型在接收者所属的类中搜寻它的方法列表，这个方法列表其实是类里面的一张表格，表格是一个存放健值对的列表，健用选择子的名字表示，值即选择子对应方法的函数指针，因为OC对象的每个方法都可以视为如下简单的C函数，&lt;return_type&gt; Class_selector(id self, SEL _cmd, ...)，这也是为什么后面找到相应匹配的方法后，能够跳转到相应实现代码的原因。
         如果在方法列表中找到与选择子名称相符的方法，就跳转到相应方法的实现代码，如果找不到，就沿着继承体系继续向上查找，若找到合适的方法就会再跳转到该方法实现代码，如果最终还是没找到相符合的代码，执行消息转发。即后面将要介绍的消息转发过程。《在这个过程中，objc_msgSend会将匹配结果缓存到快速映射表，这样后面执行相同的查找速度更快，尽管没有静态绑定的函数调用那么迅速，但是也不会慢很多了》
        下面的几个函数，与objc_msgSend函数类似，它们主要用于处理一些边界情况，可以了解一下
         objc_msgSend_stret 待发送的消息要返回结构体   objc_msgSend_fpret 待发送的消息要返回浮点数  objc_msgSendSuper待发送的消息要给超类发消息。
 </code></pre>
 
-<p>（3）函数调用（消息转发）过程 2</p>
+<p>   （3）函数调用（消息转发）过程 2</p>
 
 <pre><code>      经过上面传递消息过程还是没有找到匹配的方法之后，就会启动下面的消息转发过程。消息转发又分为动态方法解析、备援接受者、完整的消息转发三个步骤。
      动态方法解析：类的接受者，看是否能动态添加方法，以处理当前无法解读的选择子，首先要在所属类中重写下面的类方法，＋(BOOL) resolveInstanceMethod ( SEL )，前面是为了处理未知的实例方法，如果是处理未知的类方法，重写 ＋(BOOL) resolveClassMethod ( SEL )，selector 参数,即未知的选择子，在这里有机会新增处理此选择子的方法，若方法的实现代码已经写好，运行的时候就会动态插入到类里面。书本上coredata的dynamic属性即通过上面的方式实现。
- 
-     备援接受者：请接受者看看有没有其他对象能处理这条消息，这一步进行处理的相应方法为 － (id) forwardingTargetForSelector: (SEL) selector; 方法参数即代码未知选择子，注意：我们无法操作经由这一步转发的消息，要通过接受者自己去找备援对象，若找到则返回，找不到返回nil。 
- 
-    完整消息转发：修改消息的内容，即创建NSInvocation对象，把未能处理的消息的选择子，目标及参数封装到这个对象中，然后触发NSInvocation对象，把消息指派给目标对象，通过重写下列方法来转发消息。－ （void) forwardInvocation:(NSInvocation *) invocation。此方法默认实现，即改变调用目标，使消息在新目标上可以调用，这样与备援接受者实现的方法等效，只是在发送给备援接受者之前可以修改消息内容。 2、method swizzling的理解和用法
 
-    (1) Method Swizzling基本概念        
+     备援接受者：请接受者看看有没有其他对象能处理这条消息，这一步进行处理的相应方法为 － (id) forwardingTargetForSelector: (SEL) selector; 方法参数即代码未知选择子，注意：我们无法操作经由这一步转发的消息，要通过接受者自己去找备援对象，若找到则返回，找不到返回nil。 
+
+    完整消息转发：修改消息的内容，即创建NSInvocation对象，把未能处理的消息的选择子，目标及参数封装到这个对象中，然后触发NSInvocation对象，把消息指派给目标对象，通过重写下列方法来转发消息。－ （void) forwardInvocation:(NSInvocation *) invocation。此方法默认实现，即改变调用目标，使消息在新目标上可以调用，这样与备援接受者实现的方法等效，只是在发送给备援接受者之前可以修改消息内容。
+</code></pre>
+
+<p>2、method swizzling的理解和用法</p>
+
+<pre><code>    (1) Method Swizzling基本概念        
         通过前面对OC运行时的理解，允许我们修改selector(method name)到implementation(the method code itself)的映射。网上说，利用这个特性，我们可以"修补"那些没有源码的方法，如（AppKit，FoundationKit，或第三方的库等）。给这些方法基础上，增加新的操作，等和category不同的是，category如果定义了一个原来相同的方法，那么会直接覆盖原来的方法。Method Swizzling让你可以在替代原来的方法的同时可以调用原来的方法，并且为这个方法增加一些新的功能，记录日志等等，有点像subclassing。
     (2) Method Swizzling原理
     在前面已经讲到，在Objective-C中调用一个方法，其实是向一个对象发送消息，查找消息的唯一依据是selector的名字。利用Objective-C的动态特性，可以实现在运行时偷换selector对应的方法实现，达到给方法挂钩的目的。
-    
+
   每个类都有一个方法列表，存放着selector的名字和方法实现的映射关系。IMP有点类似函数指针，指向具体的Method实现。
   selectorA --&gt; IMPa    selectorB --&gt; IMPb    selectorC --&gt;IMPc ....
-  
+
  要实现互换两个函数的操作，首先要利用下面的两个函数：
  void method_exchangeImplementation(Method m1, Method m2)   //交换参数中传入的两个方法实现，方法实现可通过下面的函数获得
  Method class_geInstanceMethod (Class aClass, SEL aSelector)   //根据给定的选择从类中取出与之相关的方法的实现
@@ -1800,11 +1834,11 @@ return [RACSignal createSignal:^RACDisposable *(id&lt;RACSubscriber&gt; subscrib
 
  (3) Method Swizzling实例代码
  以在NSString的一个分类中添加一个新的方法myLowercaseString ,与NSString已经存在的lowercaseString方法的交换为例，首先在分类中定义如下方法：
- 
+
   @interface NSString (myAdditions)
  - (NSString *)myLowercaseString;
  @end
- 
+
  @implementation NSString (myAdditions)
  - (NSString *)myLowercaseString {
 NSString *lowercase = [self myLowercaseString];
@@ -1812,7 +1846,7 @@ NSLog(@"输出结果为:%@ =&gt; %@", self, lowercase);
 return lowercase;
 }
  @end
-   
+
  // 通过下面代码来交换上面两个方法
 Method originMethod = class_getInstanceMethod([NSString class], @selector(lowercaseString));
  Method swappedMethod = class_getInstanceMethod([NSString class], @selector(myLowercaseString));
@@ -1820,7 +1854,7 @@ Method originMethod = class_getInstanceMethod([NSString class], @selector(lowerc
  //最后在NSString上调用lowercaseString方法，会输出NSLog的打印语句，输出结果为:
  NSString *string = @"THIS IS THE STRING";
  NSString *lowercaseString = [string lowercaseString];
- 
+
  //实际上，交换方法后，lowercaseString调用的是myLowercaseString的具体实现，而myLowercaseString里面又调用它自己指向的lowercaseString方法的实现，从而得到上面的输出结果
 </code></pre>
 
@@ -1835,7 +1869,6 @@ Method originMethod = class_getInstanceMethod([NSString class], @selector(lowerc
 具体实现：重写相关属性的get方法，在这个方法中alloc init该属性，如果是ui控件，在这里创建后添加到父控件上。</p>
 
 <p>有一个问题：在ARC下使用懒加载，不在当前可见范围内的控件会不会做release处理，就像UITabBarController不在当前显示窗口上的viewcontroller就应该释放。</p>
-
 </div>
   
   
@@ -1864,18 +1897,18 @@ Method originMethod = class_getInstanceMethod([NSString class], @selector(lowerc
   </header>
 
 
-  <div class="entry-content"><h3 id="autolayout">1、AutoLayout的基本概念</h3>
+  <div class="entry-content"><h3>1、AutoLayout的基本概念</h3>
 
 <pre><code> （1）定义
   When calculating the runtime positions of elements in a user interface, the Auto Layout system considers all constraints at the same time, and sets positions in such a way that best satisfies all of the constraints.
  当计算用户界面上元素位置的时候，Auto Layout会考虑会同时考虑所有的约束，通过最好的满足所有的约束来设置它的位置。
- 
+
  （2）表示方法
    通过创建多个元素之间关系的数学表达式进行表示
    y = m*x + b
    y and x are attributes of views. 如：left top width等
    m and b are floating point values.  常量值 关系 ＝ &gt;= &lt;=
-   
+
    优先级 NSLayoutPriority，高priority的constraint在冲突时会覆盖低constraint的效果
    1、constraint是累加的，设定同类型的constraint不会替换原有的constraint，如果想替换需要自己删除原有的constraint。
    2、对于某些控件，constraint可以跨层级添加，button.left = buton.superview.superview.left + 10 。但是对于其subviews是通过设置frame值手动设置，以及类似scroll view（have a bounds transform）的控件，有一个内部世界和一个外部世界，内部控件无法通过约束与外部世界进行连接。
@@ -1886,44 +1919,45 @@ Method originMethod = class_getInstanceMethod([NSString class], @selector(lowerc
    setContentCompressionResistancePriority:forAxis:设定抗压能力，一般抗压能力默认值较高在750.
 </code></pre>
 
-<h3 id="autolayout-1">2、AutoLayout的布局过程</h3>
+<h3>2、AutoLayout的布局过程</h3>
+
 <pre><code>   理解布局过程是正确使用autolayout的关键，布局过程主要分为以下三个部分：更新约束 (updating constraints)－－－－布局视图 (laying out views)－－－－显示视图
-   
+
    第一部分：更新约束：自下而上（从子视图到父视图）发生的，通过子视图来撑开父视图，并且系统会在此过程中自动计算视图的 frame 。对于自定义视图，一般重写
    updateConstraints方法（一定要注意最后调用super 的这个方法），可以通过调用 setNeedsUpdateConstraints 来触发这个操作。并且最好通过实现 requiresConstraintBasedLayout 返回 YES 明确这个依赖。且可以返回intrinsicContentSize这个属性的大小。
     在使用第三方库masonry进行约束布局时，可以通过mas_makeConstraint   mas_updateConstraints（更新前面的约束，不会删除之前的约束）    mas_remakeConstraint（重新添加约束，删除之前这个view且仅仅这个view上的所有约束） 的使用，对布局进行灵活处理。注意在使用后面两种方法后，都要对当前这个view调用updateConstraints／setNeedsUpdateConstriants。使更新的约束生效。
-    
+
      第二部分：布局视图：是与前面相反的过程，即自上而下（从父视图到子视图）的过程，即将前面约束值设置得到的frame值应用到视图上，在自定义view中，可以重写layoutSubviews来获得对布局变化的所有权，即在该方法中，可以更改它的布局过程，通过调用 setNeedsLayout 来触发一个操作请求，这并不会立刻应用布局，而是在稍后再进行处理。因为所有的布局请求将会被合并到一个布局操作中去，所以你不需要为经常调用这个方法而担心。
      可以调用 layoutIfNeeded / layoutSubtreeIfNeeded（分别针对 iOS / OS X）来强制系统立即更新视图树的布局。如果你下一步操作依赖于更新后视图的 frame，这将非常有用.
-     
+
     第三部分：显示视图：自上而下将渲染后的视图传递到屏幕上，重写drawRect:可以获得自定义视图显示过程的所有权。通过调用 setNeedsDisplay 可以触发，这将会导致所有的调用都被合并到一起推迟重绘。
-    
+
     规律：由于每一步都是依赖前一步操作的，如果有任何布局的变化还没实行的话，显示操作将会触发一个布局行为。类似地，如果约束条件系统中存在没有实行的改变，布局变化也将会触发更新约束条件。因此，这三步并不是单向的。基于约束条件的布局是一个迭代的过程，布局操作可以基于之前的布局方案来对约束做出更改，而这将再次触发约束的更新，并紧接另一个布局操作。这可以被用来创建高级的自定义视图布局，但是如果你每一次调用的自定义 layoutSubviews 都会导致另一个布局操作的话，你将会陷入到无限循环的麻烦中去。
-    
+
     使用：在viewcontroller中，可以重写下面的方法，获得布局后的控件的frame等属性，并且还可以在这里对这些属性进行修改和更新   
     - (void)viewWillLayoutSubviews
     - (void)viewDidLayoutSubviews
-    
+
     调试：
     当你在不可满足的约束条件错误信息中看到 NSLayoutResizingMaskConstraints 时，你肯定忘了为你某一个视图设定 translatesAutoResizingMaskIntoConstraints 为 NO
 </code></pre>
 
-<h3 id="springsstrutsc">springs和strutsc方法存在的布局问题</h3>
+<h3>springs和strutsc方法存在的布局问题</h3>
 
 <pre><code>   (1) 让视图贴附左上边缘（或者右下边缘）,并且当父视图大小改变时，重新调整自身水平和垂直方向的大小。但又没告诉子视图该调整多少（即保证视图之间的间隔是多少）（默认的处理就是按初始的固定大小排列，如果与其他视图出现冲突，就缩小自己的宽和高）这样带来的问题是如果切换横竖屏会出现一些问题。
     在当父视图改变大小时，autosizing masks告诉子视图调整大小,改变灵活宽度和高度设置（springs在旋转用户界面之前、之间、之后，UIKit会发送一些消息到你的视图控制器，你可以截获这些消息，从而对你UI做出改变。代表性的像viewWillLayoutSubviews，你会重写这个方法从而改变任何需要重新排列的视图的frame。
-    
+
    (2) 根据上面的分析可以重写viewWillLayoutSubviews。判断屏幕方法来设置视图的不同固定宽度和高度，注意将autosizing对应图中的宽高约束去掉，此时横竖屏切换可以了，但是在不同尺寸的模拟器上运行又会出现一些问题。所以最后autolayout自动布局应运而生啦
-   
+
  http://www.cocoachina.com/industry/20131203/7462.html   
- 
+
  约束是一个真实的对象（NSLayoutConstraint），并且他们也有属性,自动布局最基本的工具是约束
 </code></pre>
 
-<p>参考文档</p>
+<p>  参考文档</p>
 
-<p>http://www.cocoachina.com/industry/20131012/7148.html
-http://objccn.io/issue-3-5/</p>
+<p><a href="http://www.cocoachina.com/industry/20131012/7148.html">http://www.cocoachina.com/industry/20131012/7148.html</a>
+<a href="http://objccn.io/issue-3-5/">http://objccn.io/issue-3-5/</a></p>
 </div>
   
   

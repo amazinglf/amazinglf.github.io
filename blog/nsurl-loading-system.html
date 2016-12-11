@@ -9,8 +9,7 @@
   <meta name="author" content="梁芳">
 
   
-  <meta name="description" content="1、概述
-NSURL Loading System主要用来描述使用标准internet协议与server端交互，以及与URLs进行交互的基础框架类。它是一组类和协议的集合，允许你的app去获取URL指定的内容，核心类即NSURL，通过它使我们的app可以操作URLs以及URLs指向的资源。 &hellip;">
+  <meta name="description" content="1、概述 NSURL Loading System主要用来描述使用标准internet协议与server端交互，以及与URLs进行交互的基础框架类。它是一组类和协议的集合，允许你的app去获取URL指定的内容，核心类即NSURL，通过它使我们的app可以操作URLs以及URLs指向的资源。 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -85,40 +84,43 @@ NSURL Loading System主要用来描述使用标准internet协议与server端交�
   </header>
 
 
-<div class="entry-content"><h3 id="section">1、概述</h3>
+<div class="entry-content"><h3>1、概述</h3>
+
 <p>NSURL Loading System主要用来描述使用标准internet协议与server端交互，以及与URLs进行交互的基础框架类。它是一组类和协议的集合，允许你的app去获取URL指定的内容，核心类即NSURL，通过它使我们的app可以操作URLs以及URLs指向的资源。</p>
 
 <p>除了NSURL，这个基础框架还提供了包括加载URLs、上传数据到服务器、管理cookie存储、控制返回数据的缓存、处理证书存储和身份验证、编写自定义的协议扩展等一套丰富的功能集合。</p>
 
-<p>NSURL Loading System主要支持通过以下协议来获取相应资源，包括文件传输协议、超文本传输协议、超文本加密传输协议、本地文件url传输协议、Data URLs传输协议（ftp://   http://  https://  file:///  data://），同时支持代理服务器和socks网关。</p>
+<p>NSURL Loading System主要支持通过以下协议来获取相应资源，包括文件传输协议、超文本传输协议、超文本加密传输协议、本地文件url传输协议、Data URLs传输协议（<a href="ftp://">ftp://</a>   <a href="http://">http://</a>  <a href="https://">https://</a>  file:///  data://），同时支持代理服务器和socks网关。</p>
 
 <p>除了NSURL Loading System，iOS还支持其他API可以在其他应用如safari中打开网页等，即通过在UIApplication中使用openURL:打开相关URL，具体可参考UIApplication Class Reference.</p>
 
 <p>NSURL Loading System包含了一系列helper类来协助URL loading类完成加载过程和相关行为，主要可以分为以下5大类，即协议支持、身份验证与证书、cookie存储、配置管理、缓存管理，如下图链接</p>
 
-<p>https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/URLLoadingSystem/Art/nsobject_hierarchy_2x.png</p>
+<p><a href="https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/URLLoadingSystem/Art/nsobject_hierarchy_2x.png">https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/URLLoadingSystem/Art/nsobject_hierarchy_2x.png</a></p>
 
-<h3 id="url-loading">2、URL Loading</h3>
+<h3>2、URL Loading</h3>
 
 <p>URL Loading是在NSURL Loading System中通过url获取相关内容使用最普遍的一个类，你可以通过很多种方式获取相关内容，这依赖于你app的需求、app系统版本，以及你是否希望以文件的形式获取数据，还是以内存的形式获取。</p>
 
 <p>在iOS7及之后的版本，推荐使用NSURLSession API来执行URL请求，如果相应应用必须支持旧的版本，你可以通过NSURLConnectionx下载数据到内存，然后根据需要看是否将数据写入磁盘，或者使用NSURLDownload下载数据到磁盘文件，你选择的方法很大程度上依赖于你希望获取数据到内存还是磁盘文件。</p>
 
-<h3 id="nsurlsession">如何使用NSURLSession</h3>
+<h3>如何使用NSURLSession</h3>
+
 <p>概览：NSURLSession及其相关类主要提供了通过http实现下载功能的API。提供了包括支持请求认证、后台下载（app在没有运行状态、暂停状态下的一些）等功能。这些功能都通 过其代理方法获取。</p>
 
-<h3 id="nsurlsession-1">理解NSURLSession的基本概念</h3>
+<h3>理解NSURLSession的基本概念</h3>
 
 <p>一个session中tasks的行为依赖于三件事情：session的类型（依赖于创建时配置对象的类型），task的类型，当task创建的时候app是否在前台。</p>
 
-<h4 id="session">1.session的类型</h4>
+<h4>1.session的类型</h4>
+
 <p>Default sessions（默认）：与其它下载url的基础方法非常相似，使用了持久的基于磁盘的缓存，并且将认证信息存储到用户的keychain里面。</p>
 
 <p>Ephemeral sessions（短暂）：它不存储任何数据到磁盘，所有的缓存、认证信息等都存储在RAM 随机存取存储器中与session进行关联，当app的session失效时，它们会自动清除。</p>
 
 <p>Background sessions（后台）：与默认session非常相似，除了它需要使用一个单独的进程来处理所有的数据传输，并且它在某些方面存在着一些限制。</p>
 
-<h4 id="task">2.task的类型</h4>
+<h4>2.task的类型</h4>
 
 <p>data tasks：用于发送和接受NSData类型的对象，适用于与服务端的短暂频繁交互的客户端请求。返回的数据可以通过一个comletion handler block一定时间内的部分或者所有的数据。</p>
 
@@ -126,7 +128,7 @@ NSURL Loading System主要用来描述使用标准internet协议与server端交�
 
 <p>upload tasks：以file文件的形式上传数据，并且也支持app没有运行时的后台上传</p>
 
-<h4 id="section-1">3.后台数据传输的注意事项</h4>
+<h4>3.后台数据传输的注意事项</h4>
 
 <p>对于Background sessions，由于实际的数据传输是i通过一个进程来执行的，并且重新启动app的过程相对代价也很大，有很多features功能也不可用，因此会存在如下一些限制：</p>
 
@@ -155,11 +157,12 @@ NSURL Loading System主要用来描述使用标准internet协议与server端交�
 
 <p>对于使用NSURLSession的后台传输任务的例子，可以参考Simple Background Transfer.</p>
 
-<h3 id="section-2">生命周期及与代理的交互</h3>
+<h3>生命周期及与代理的交互</h3>
 
 <p>充分理解session的生命循环，对于处理NSURLSession相关的任务是非常有帮助，包括session怎样与它的代理交互，代理方法调用的顺序，如果server端返回一个重定向会发生什么，当你的app恢复一个错误的下载会发生什么，等等，关于NSURLSession生命周期的完整描述，参考Life Cycle of a URL Session</p>
 
-<h3 id="nscoping">NSCoping行为</h3>
+<h3>NSCoping行为</h3>
+
 <p>session和task对象都遵循如下的NSCoping协议：
 当你的app拷贝了一个session或者task对象，会返回一个同样的对象
 当你的app拷贝了一个configuration对象，会返回一个你可以独立修改的新的对象</p>
