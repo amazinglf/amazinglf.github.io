@@ -114,7 +114,7 @@
 
 <p> 注意：CoreFoundation中方法是线程不安全的，而OC中方法是线程安全的，且OC方法是对CoreFoundation中方法的封装。<br/>
  原理：从上面的表格可以看出，线程和RunLoop是息息相关的，即线程和RunLoop是一一对应的关系，从获取RunLoop的   源码(<a href="https://opensource.apple.com/source/CF/CF-1151.16/CFRunLoop.c.auto.html">https://opensource.apple.com/source/CF/CF-1151.16/CFRunLoop.c.auto.html</a>)可以看出，它是通过一个字典来实现线程和RunLoop之前一一对应关系的，<br/>
- —
+ _
  <img src="../images/runloop1.png" alt="Alt text" /></p>
 
 <h4>启动RunLoop</h4>
