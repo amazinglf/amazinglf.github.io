@@ -105,7 +105,7 @@ Bundle identifier(CFBundleIdentifier)-项目的唯一标识，部署到真机时
 
 <p>2、app的生命周期</p>
 
-<p>  （1）执行main.m文件的main函数，实现下面两个操作</p>
+<p>（1）执行main.m文件的main函数，实现下面两个操作</p>
 
 <pre><code>  创建UIApplication对象
   创建UIApplication的delegate对象
@@ -114,7 +114,7 @@ Bundle identifier(CFBundleIdentifier)-项目的唯一标识，部署到真机时
   argc、argv：直接传递给UIApplicationMain进行相关处理即可
   principalClassName：指定应用程序类名（app的象征），该类必须是UIApplication(或子类)。如果为nil,则用UIApplication类作为默认值
  delegateClassName：指定应用程序的代理类，该类必须遵守  UIApplicationDelegate协议，UIApplicationMain函数会根据principalClassName创建UIApplication对象，根据delegateClassName创建一个delegate对象，并将该delegate对象赋值给UIApplication对象中的delegate属性。
-
+ 
  以创建的sigle view applicaiton为例，相应方法实现为：return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));
  （2）接着会建立应用程序的Main Runloop（事件循环）  
  如果有storyboard，根据Info.plist获得最主要storyboard的文件名,加载最主要的storyboard
@@ -124,11 +124,11 @@ Bundle identifier(CFBundleIdentifier)-项目的唯一标识，部署到真机时
 如果没有storyboard，delegate对象开始处理(监听)系统事件程序启动完毕的时候, 就会调用代理的application:didFinishLaunchingWithOptions:方法在application:didFinishLaunchingWithOptions:中创建UIWindow创建和设置UIWindow的rootViewController显示窗口
 </code></pre>
 
-<p>   有一点不明白的地方就是，如果有storyboard的时候，是显示窗口之后，再去调用appdelegete代理的方法，还是先调用appdelegete代理的方法，再显示storyboard的窗口（解决办法，在代   理的application:didFinishLaunchingWithOptions:方法中创建uiwindow或对它重新赋值，看是否会覆盖storyboard）结论是先从storyboard加载，再执行代理方法。</p>
+<p>有一点不明白的地方就是，如果有storyboard的时候，是显示窗口之后，再去调用appdelegete代理的方法，还是先调用appdelegete代理的方法，再显示storyboard的窗口（解决办法，在代   理的application:didFinishLaunchingWithOptions:方法中创建uiwindow或对它重新赋值，看是否会覆盖storyboard）结论是先从storyboard加载，再执行代理方法。</p>
 
-<p>   （3）UIWindow</p>
+<p>（3）UIWindow</p>
 
-<p> UIWindow是一种特殊的UIView，通常在一个app中只会有一个UIWindow
+<p>UIWindow是一种特殊的UIView，通常在一个app中只会有一个UIWindow
 iOS程序启动完毕后，创建的第一个视图控件就是UIWindow，接着创建控制器的view，最后将控制器的view添加到UIWindow上，于是控制器的view就显示在屏幕上了</p>
 
 <pre><code>一个iOS程序之所以能显示到屏幕上，完全是因为它有UIWindow,也就说，`没有UIWindow，就看不见任何UI界面
@@ -153,7 +153,7 @@ return YES;
  最后，程序正常退出时UIApplicationMain函数才返回。
 </code></pre>
 
-<p>   3、对象的生命周期</p>
+<p>3、对象的生命周期</p>
 
 <pre><code>任何对象都是继承自NSObject的，可以通过重写下列方法，设置对象的初始化。
 + (void)load;
@@ -161,7 +161,7 @@ return YES;
 - (instancetype)init
 </code></pre>
 
-<p>   4、视图控制器的生命周期</p>
+<p>4、视图控制器的生命周期</p>
 
 <pre><code> loadView     从nib载入视图 ，通常这一步不需要去干涉。
  loadView 此方法在控制器的view为nil的时候被调用。 此方法用于以编程的方式创建view的时候用到。 如：
@@ -173,10 +173,10 @@ self.view = view;  }
  viewDidLoad方法：此方法为控制器已被实例化，在视图被加载到内存中的时候调用该方法，这个时候视图并未出现。在该方法中通常进行的是对所控制的视图进行初始化处理。
   viewDidLoad方法在应用运行的时候只调用一次，而其他4个方法viewWillAppear   viewDidAppear   viewWillDisapper    viewDidDisapper可以被反复调用多次，它们的使用很广泛但同时也具有很强的技巧性。
  iOS系统在低内存时情况下会调用didReceiveMemoryWarning:该方法的主要职能是释放内存，包括视图控制器中的一些成员变量和视图的释放
-
+ 
   ViewController的生命周期中各方法执行流程如下：
   init—&gt;loadView—&gt;viewDidLoad—&gt;viewWillApper—&gt;viewDidApper—&gt;viewWillDisapper—&gt;viewDidDisapper—&gt;viewWillUnload-&gt;viewDidUnload—&gt;dealloc
-
+  
  修改应用初始启动时关联的storyboard文件，通过代码创建初始启动的视图控制器
  - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 // Override point for customization after application launch.
@@ -194,61 +194,66 @@ return YES;
 }
 </code></pre>
 
-<p>   通过创建storyboard加载视图控制器的方法：
-创建一个storyboard，New File &ndash;> IOS &ndash;> User Interface &ndash;> Storyboard
+<p>通过创建storyboard加载视图控制器的方法：
+创建一个storyboard，New File –&gt; IOS –&gt; User Interface –&gt; Storyboard
 设置storyboard右侧的class属性为相应视图控制器类
 在代码中创建storyboard的同时，启动相应的视图控制器
-UIStoryboard *two = [UIStoryboard storyboardWithName:@&ldquo;Main&rdquo; bundle:nil];
+UIStoryboard *two = [UIStoryboard storyboardWithName:@”Main” bundle:nil];
 [self.navigationController pushViewController:[two instantiateInitialViewController] animated:YES];
 创建视图控制器时勾选创建xib，自动生成对应xib文件
-New File &ndash;> IOS &ndash;> Source &ndash;> Cocoa Touch Class(勾选Also create Xib File)</p>
+New File –&gt; IOS –&gt; Source –&gt; Cocoa Touch Class(勾选Also create Xib File)</p>
 
-<p>   通过手动创建带xib的视图控制器
-创建一个xib文件，New File &ndash;> IOS &ndash;> User Interface &ndash;> view
-FiveViewController *fiveVC = [[FiveViewController alloc]initWithNibName:@&ldquo;other&rdquo; bundle:nil];
+<p>通过手动创建带xib的视图控制器
+创建一个xib文件，New File –&gt; IOS –&gt; User Interface –&gt; view
+FiveViewController *fiveVC = [[FiveViewController alloc]initWithNibName:@”other” bundle:nil];
     [self.navigationController pushViewController:fiveVC animated:YES];</p>
 
 <p>5、 视图控制器装载和卸载视图的过程</p>
 
-<p>   ViewController的职责主要包括管理内部各个view的加载显示和卸载，同时负责与其他ViewController的通信和协调
+<p>ViewController的职责主要包括管理内部各个view的加载显示和卸载，同时负责与其他ViewController的通信和协调 
         ViewController可以分为两类：
         一类是显示内容的，比如UIViewController、UITableViewController等，同时还可以自定义继承自UIViewController的ViewController；另一类是ViewController容器，UINavigationViewController和UITabBarController等
          在控制器view加载过程中首先会调用loadView方法，在这个方法中主要完成一些关键view的初始化工作，比如UINavigationViewController和UITabBarController等容器类的ViewController；接下来就是加载view，加载成功后，会接着调用viewDidLoad方法，这里要记住的一点是，在loadView之前，是没有view的，也就是说，在这之前，view还没有被初始化。完成viewDidLoad方法后，ViewController里面就成功的加载view了，如下图右下角所示。
 在Controller中创建view有两种方式，一种是通过代码创建、一种是通过Storyboard或Interface Builder来创建，后者可以比较直观的配置view的外观和属性
  关于loadView方法的重写，官方文档中有一个明显的注释，当通过代码方式去创建你自己的view时，在loadView方法中不应该调用super，如果调用[super loadView]会影响CPU性能。
-  - (void)loadView<br/>
-{<br/>
-     CGRect applicationFrame = [[UIScreen mainScreen] applicationFrame];<br/>
-     UIView *contentView = [[UIView alloc] initWithFrame:applicationFrame];<br/>
-     contentView.backgroundColor = [UIColor blackColor];<br/>
-     self.view = contentView; <br/>
-}
-view加载过程.png
+  - (void)loadView<br />
+{<br />
+     CGRect applicationFrame = [[UIScreen mainScreen] applicationFrame];<br />
+     UIView *contentView = [[UIView alloc] initWithFrame:applicationFrame];<br />
+     contentView.backgroundColor = [UIColor blackColor];<br />
+     self.view = contentView; <br />
+} 
+view加载过程.png 
        当系统发出内存警告时，会调用didReceiveMemoeryWarning方法，如果当前有能被释放的view，系统会调用viewWillUnload方法来释放view，完成后调用viewDidUnload方法，至此，view就被卸载了。此时原本指向view的变量要被置为nil，具体操作是在viewDidUnload方法中调用self.myButton = nil。
 ViewController中view卸载过程.png
         loadView和viewDidLoad的区别就是，loadView时view还没有生成，viewDidLoad时，view已经生成了，loadView只会被调用一次，而viewDidLoad可能会被调用多次（View可能会被多次加载），当view被添加到其他view中之前，会调用viewWillAppear，之后会调用viewDidAppear。当view从其他view中移除之前，调用viewWillDisAppear，移除之后会调用viewDidDisappear。当view不再使用时，受到内存警告时，ViewController会将view释放并将其指向为nil。</p>
 
 <p>6、视图UIView的生命周期</p>
 
-<p>  常用方法如下：
+<p>常用方法如下：
 - (void)removeFromSuperview;
 - (void)insertSubview:(UIView *)view atIndex:(NSInteger)index;
 - (void)exchangeSubviewAtIndex:(NSInteger)index1 withSubviewAtIndex:(NSInteger)index2;</p>
 
 <ul>
-<li>(void)addSubview:(UIView *)view;</li>
-<li>(void)insertSubview:(UIView <em>)view belowSubview:(UIView </em>)siblingSubview;</li>
-<li><p>(void)insertSubview:(UIView <em>)view aboveSubview:(UIView </em>)siblingSubview;</p></li>
-<li><p>(void)bringSubviewToFront:(UIView *)view;</p></li>
-<li><p>(void)sendSubviewToBack:(UIView *)view;</p></li>
-<li><p>(void)didAddSubview:(UIView *)subview;</p></li>
-<li><p>(void)willRemoveSubview:(UIView *)subview;</p></li>
-<li><p>(void)willMoveToSuperview:(nullable UIView *)newSuperview;</p></li>
-<li>(void)didMoveToSuperview;</li>
-<li>(void)willMoveToWindow:(nullable UIWindow *)newWindow;</li>
-<li>(void)didMoveToWindow;</li>
+  <li>(void)addSubview:(UIView *)view;</li>
+  <li>(void)insertSubview:(UIView *)view belowSubview:(UIView *)siblingSubview;</li>
+  <li>
+    <p>(void)insertSubview:(UIView *)view aboveSubview:(UIView *)siblingSubview;</p>
+  </li>
+  <li>(void)bringSubviewToFront:(UIView *)view;</li>
+  <li>
+    <p>(void)sendSubviewToBack:(UIView *)view;</p>
+  </li>
+  <li>(void)didAddSubview:(UIView *)subview;</li>
+  <li>
+    <p>(void)willRemoveSubview:(UIView *)subview;</p>
+  </li>
+  <li>(void)willMoveToSuperview:(nullable UIView *)newSuperview;</li>
+  <li>(void)didMoveToSuperview;</li>
+  <li>(void)willMoveToWindow:(nullable UIWindow *)newWindow;</li>
+  <li>(void)didMoveToWindow;</li>
 </ul>
-
 </div>
   
   
@@ -277,23 +282,19 @@ ViewController中view卸载过程.png
   </header>
 
 
-  <div class="entry-content"><h2>类与对象的关系结构图</h2>
-
+  <div class="entry-content"><h2 id="section">类与对象的关系结构图</h2>
 <p>前面两个图合起来即表示后面这个图，理解图中实例、类、元类以及isa指针、superclass指针的原理非常重要，后面的消息发送及转发过程就需要基于这些图来更好的理解
 <img src="../images/runtime/image1.png" alt="实例isa指针与类之间的关系" />
 <img src="../images/runtime/image2.png" alt="实例、类与元类metaclass关系" />
 <img src="../images/runtime/image3.png" alt="isa指针、superclass指针、实例、类与元类metaclass关系" /></p>
 
-<h2>与OC运行时进行交互的方式</h2>
-
+<h2 id="oc">与OC运行时进行交互的方式</h2>
 <p>（1）通过NSObject类提供的方法，如isKindOfClass:  isMemberOfClass:   respondsToSelector: conformsToProtocol: methodForSelector:等</p>
 
-<p>（2）通过Runtime函数，参考Objective-C Runtime Reference.</p>
-
-<h2>消息发送过程</h2>
-
-<p>1.OC中所有的消息[receiver message]都会转化为一个C语言函数的调用，即
-objc_msgSend(receiver, selector, arg1, arg2, &hellip;)</p>
+<p>（2）通过Runtime函数，参考Objective-C Runtime Reference.
+##消息发送过程
+1.OC中所有的消息[receiver message]都会转化为一个C语言函数的调用，即
+objc_msgSend(receiver, selector, arg1, arg2, …)</p>
 
 <p>2.在objc_msgSend函数执行过程中，会首先根据接收者（someObject）和选择子（measageName）的类型在接收者所属的类中搜寻它的方法列表，这个方法列表其实是类里面的一张表格，表格是一个存放健值对的列表，健用选择子的名字表示，值即选择子对应方法的函数指针，同时会对这个方法列表进行缓存，查找之前会优先从缓存查找</p>
 
@@ -301,152 +302,146 @@ objc_msgSend(receiver, selector, arg1, arg2, &hellip;)</p>
 
 <p>下面的几个函数，与objc_msgSend函数类似，它们主要用于处理一些边界情况，可以了解一下</p>
 
-<p>objc_msgSend_stret 待发送的消息要返回结构体   objc_msgSend_fpret 待发送的消息要返回浮点数  objc_msgSendSuper待发送的消息要给超类发消息。</p>
-
-<h2>消息转发过程</h2>
-
-<p>走到消息转发过程这一步，即表示调用的方法在当前类中没有实现，或者一些其他的原因当前类无法处理这个方法对应的选择子，于是启动消息转发。其中消息转发又分为动态方法解析、备援接受者、完整的消息转发三个步骤。</p>
-
-<h3>动态方法解析</h3>
-
-<p>类的接受者，看是否能动态添加方法，以处理当前无法解读的选择子，首先要在所属类中重写下面的类方法，＋(BOOL) resolveInstanceMethod ( SEL )，返回类型为BOOL，即表示能否处理，前面是为了处理未知的实例方法，如果是处理未知的类方法，重写 ＋(BOOL) resolveClassMethod ( SEL )，selector 参数,即未知的选择子，在这里有机会新增处理此选择子的方法，若方法的实现代码已经写好，运行的时候就会动态插入到类里面，CoreData的Dynamic属性即通过上面的方式实现。下面是通过resolveInstanceMethod方法处理未知选择子的实例代码，其中class_addMethod中的最后一个参数"v@:&ldquo;，分号前面表示返回值类型及方法名，分号后面是参数类型，其中v表示void类型，@表示对象类型，关于更多类型的表示方法参考</p>
+<p>objc_msgSend_stret 待发送的消息要返回结构体   objc_msgSend_fpret 待发送的消息要返回浮点数  objc_msgSendSuper待发送的消息要给超类发消息。
+##消息转发过程
+走到消息转发过程这一步，即表示调用的方法在当前类中没有实现，或者一些其他的原因当前类无法处理这个方法对应的选择子，于是启动消息转发。其中消息转发又分为动态方法解析、备援接受者、完整的消息转发三个步骤。
+###动态方法解析
+类的接受者，看是否能动态添加方法，以处理当前无法解读的选择子，首先要在所属类中重写下面的类方法，＋(BOOL) resolveInstanceMethod ( SEL )，返回类型为BOOL，即表示能否处理，前面是为了处理未知的实例方法，如果是处理未知的类方法，重写 ＋(BOOL) resolveClassMethod ( SEL )，selector 参数,即未知的选择子，在这里有机会新增处理此选择子的方法，若方法的实现代码已经写好，运行的时候就会动态插入到类里面，CoreData的Dynamic属性即通过上面的方式实现。下面是通过resolveInstanceMethod方法处理未知选择子的实例代码，其中class_addMethod中的最后一个参数”v@:”，分号前面表示返回值类型及方法名，分号后面是参数类型，其中v表示void类型，@表示对象类型，关于更多类型的表示方法参考</p>
 
 <pre><code>#import "RuntimeTestClass.h"
 #import "objc/runtime.h"
-    @interface RuntimeTest2Class : NSObject
-    - (void)unImplementMehtod2;
-    @end
-    @implementation RuntimeTest2Class
-    - (id)init
-    {
-        if (self = [super init]) {
-            return self;
-        }
-        return nil;
-    }
-    - (void)unImplementMehtod2
-    {
-        NSLog(@"消息转发第二步，由当前这个类的对象来处理");
-    }
-    @end
-
-    @interface RuntimeTestClass ()
-    @property (nonatomic, strong) RuntimeTest2Class *test2;
-    @end
-    @implementation RuntimeTestClass
-    - (id)init
-    {
-        if (self = [super init]) {
-            _test2 = [[RuntimeTest2Class alloc] init];
-            return self;
-        }
-        return nil;
-    }
-    -(id)forwardingTargetForSelector:(SEL)aSelector
-    {
-        if ([self.test2 respondsToSelector:aSelector]) {
-            return self.test2;
-        }
-        return [super forwardingTargetForSelector:aSelector];
-    }
-    @end 
+	@interface RuntimeTest2Class : NSObject
+	- (void)unImplementMehtod2;
+	@end
+	@implementation RuntimeTest2Class
+	- (id)init
+	{
+	    if (self = [super init]) {
+	        return self;
+	    }
+	    return nil;
+	}
+	- (void)unImplementMehtod2
+	{
+	    NSLog(@"消息转发第二步，由当前这个类的对象来处理");
+	}
+	@end
+	 
+	@interface RuntimeTestClass ()
+	@property (nonatomic, strong) RuntimeTest2Class *test2;
+	@end
+	@implementation RuntimeTestClass
+	- (id)init
+	{
+	    if (self = [super init]) {
+	        _test2 = [[RuntimeTest2Class alloc] init];
+	        return self;
+	    }
+	    return nil;
+	}
+	-(id)forwardingTargetForSelector:(SEL)aSelector
+	{
+	    if ([self.test2 respondsToSelector:aSelector]) {
+	        return self.test2;
+	    }
+	    return [super forwardingTargetForSelector:aSelector];
+	}
+	@end 
 </code></pre>
 
-<h3>备援接受者</h3>
-
+<h3 id="section-1">备援接受者</h3>
 <p>看当前类有没有其他对象能处理这条消息，这一步进行处理的相应方法为 － (id) forwardingTargetForSelector: (SEL) selector; 方法参数即代码未知选择子，返回值为id，即代表能处理这条消息的其他对象，这一步转发的消息，我们可以试着看当前类的其他对象是否能处理这个选择子，如果能则返回当前类的这个对象。 实例代码如下所示</p>
 
-<pre><code>    实例一
-    #import "RuntimeTestClass.h"
-    #import "objc/runtime.h"
-    @interface RuntimeTest2Class : NSObject
-    - (void)unImplementMehtod2;
-    @end
-    @implementation RuntimeTest2Class
-    - (id)init
-    {
-     if (self = [super init]) {
-         return self;
-     }
-     return nil;
-    }
-    - (void)unImplementMehtod2
-    {
-     NSLog(@"消息转发第二步，由当前这个类的对象来处理");
-    }
-    @end
-
-    @interface RuntimeTestClass ()
-    @property (nonatomic, strong) RuntimeTest2Class *test2;
-    @end
-    @implementation RuntimeTestClass
-    - (id)init
-    {
-     if (self = [super init]) {
-         _test2 = [[RuntimeTest2Class alloc] init];
-         return self;
-     }
-     return nil;
-    }
-    -(id)forwardingTargetForSelector:(SEL)aSelector
-    {
-     if ([self.test2 respondsToSelector:aSelector]) {
-         return self.test2;
-     }
-     return [super forwardingTargetForSelector:aSelector];
-    }
-    @end 
-
-    实例二
-    #import "RuntimeTestClass.h"
-    #import &lt;objc/runtime.h&gt;
-    @protocol RuntimeTestProtocol &lt;NSObject&gt;
-    @required
-    - (void)protocolMethod;
-    @end
-
-    @interface RuntimeTest2Class : NSObject &lt;RuntimeTestProtocol&gt;
-    @end
-    @implementation RuntimeTest2Class
-    - (id)init
-    {
-        if (self = [super init]) {
-            return self;
-        }
-        return nil;
-    }
-    - (void)protocolMethod;
-    {
-        NSLog(@"消息转发第二步，由当前这个类的对象来处理");
-    }
-    @end
-
-    @interface RuntimeTestClass ()
-    @property (nonatomic, weak) id&lt;RuntimeTestProtocol&gt; delegate;
-    @end
-    @implementation RuntimeTestClass
-    - (id)init
-    {
-        if (self = [super init]) {
-            _delegate = [[RuntimeTest2Class alloc] init];
-            return self;
-        }
-        return nil;
-    }
-    -(id)forwardingTargetForSelector:(SEL)aSelector
-    {
-        struct objc_method_description methodDesc = protocol_getMethodDescription(@protocol(RuntimeTestProtocol), aSelector, YES, YES);
-        if (methodDesc.name) {
-            return self.delegate;
-        }
-        return [super forwardingTargetForSelector:aSelector];
-    }
-    @end
+<pre><code>	实例一
+	#import "RuntimeTestClass.h"
+	#import "objc/runtime.h"
+	@interface RuntimeTest2Class : NSObject
+	- (void)unImplementMehtod2;
+	@end
+	@implementation RuntimeTest2Class
+	- (id)init
+	{
+	 if (self = [super init]) {
+	     return self;
+	 }
+	 return nil;
+	}
+	- (void)unImplementMehtod2
+	{
+	 NSLog(@"消息转发第二步，由当前这个类的对象来处理");
+	}
+	@end
+	
+	@interface RuntimeTestClass ()
+	@property (nonatomic, strong) RuntimeTest2Class *test2;
+	@end
+	@implementation RuntimeTestClass
+	- (id)init
+	{
+	 if (self = [super init]) {
+	     _test2 = [[RuntimeTest2Class alloc] init];
+	     return self;
+	 }
+	 return nil;
+	}
+	-(id)forwardingTargetForSelector:(SEL)aSelector
+	{
+	 if ([self.test2 respondsToSelector:aSelector]) {
+	     return self.test2;
+	 }
+	 return [super forwardingTargetForSelector:aSelector];
+	}
+	@end 
+	
+	实例二
+	#import "RuntimeTestClass.h"
+	#import &lt;objc/runtime.h&gt;
+	@protocol RuntimeTestProtocol &lt;NSObject&gt;
+	@required
+	- (void)protocolMethod;
+	@end
+	 
+	@interface RuntimeTest2Class : NSObject &lt;RuntimeTestProtocol&gt;
+	@end
+	@implementation RuntimeTest2Class
+	- (id)init
+	{
+	    if (self = [super init]) {
+	        return self;
+	    }
+	    return nil;
+	}
+	- (void)protocolMethod;
+	{
+	    NSLog(@"消息转发第二步，由当前这个类的对象来处理");
+	}
+	@end
+	 
+	@interface RuntimeTestClass ()
+	@property (nonatomic, weak) id&lt;RuntimeTestProtocol&gt; delegate;
+	@end
+	@implementation RuntimeTestClass
+	- (id)init
+	{
+	    if (self = [super init]) {
+	        _delegate = [[RuntimeTest2Class alloc] init];
+	        return self;
+	    }
+	    return nil;
+	}
+	-(id)forwardingTargetForSelector:(SEL)aSelector
+	{
+	    struct objc_method_description methodDesc = protocol_getMethodDescription(@protocol(RuntimeTestProtocol), aSelector, YES, YES);
+	    if (methodDesc.name) {
+	        return self.delegate;
+	    }
+	    return [super forwardingTargetForSelector:aSelector];
+	}
+	@end
 </code></pre>
 
-<h3>完整消息转发</h3>
-
-<p>与前面备援接受者的消息转发不太一样的是，这一步还可以修改消息的内容，即创建NSInvocation对象，重新赋值消息的参数等信息，把未能处理的消息的选择子，目标及参数封装到这个对象中，然后触发NSInvocation对象，把消息指派给目标对象，通过重写下列方法来转发消息。－ （void) forwardInvocation:(NSInvocation <em>) invocation。此方法默认实现，即改变调用目标，使消息在新目标上可以调用，这样与备援接受者实现的方法等效，只是在发送给备援接受者之前可以修改消息内容。重写前面方法之前，还要注意重写- (nullable NSMethodSignature </em>)methodSignatureForSelector:(SEL)sel方法，获取seletor相关的方法的描述以及方法实现的函数地址。</p>
+<h3 id="section-2">完整消息转发</h3>
+<p>与前面备援接受者的消息转发不太一样的是，这一步还可以修改消息的内容，即创建NSInvocation对象，重新赋值消息的参数等信息，把未能处理的消息的选择子，目标及参数封装到这个对象中，然后触发NSInvocation对象，把消息指派给目标对象，通过重写下列方法来转发消息。－ （void) forwardInvocation:(NSInvocation *) invocation。此方法默认实现，即改变调用目标，使消息在新目标上可以调用，这样与备援接受者实现的方法等效，只是在发送给备援接受者之前可以修改消息内容。重写前面方法之前，还要注意重写- (nullable NSMethodSignature *)methodSignatureForSelector:(SEL)sel方法，获取seletor相关的方法的描述以及方法实现的函数地址。</p>
 
 <pre><code>#import "RuntimeTestClass.h"
 #import &lt;objc/runtime.h&gt;
@@ -508,16 +503,14 @@ objc_msgSend(receiver, selector, arg1, arg2, &hellip;)</p>
 }
 </code></pre>
 
-<h2>应用例子</h2>
-
+<h2 id="section-3">应用例子</h2>
 <p>1.method swizzing，即运用Runtime函数将method对应的IMP实现替换掉，在消息发送过程直接调用替换后的方法实现</p>
 
 <p>2.僵尸对象(NSZombieObject)的实现，即要释放当前对象时不真正释放，而是把对象的isa指针指向僵尸类，当前要释放的对象就变成了僵尸对象，由于僵尸类可以处理任何类型的消息，即给僵尸对象发消息时，会调用到僵尸类的方法，在方法中输出方法的调用方、方法名等信息，这样就可以方便我们通过调试信息查找问题原因了。具体有关僵尸类的定义后续可以补上，整个过程是在dealloc方法中实现的，要启用这个功能需要在xcode系统环境中开启如下选项。
 <img src="../images/runtime/image4.png" alt="开启僵尸对象检查" /></p>
 
-<h2>附录</h2>
-
-<p>参考文档：<a href="https://developer.apple.com/library/ios/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Introduction/Introduction.html">https://developer.apple.com/library/ios/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Introduction/Introduction.html</a></p>
+<h2 id="section-4">附录</h2>
+<p>参考文档：https://developer.apple.com/library/ios/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Introduction/Introduction.html</p>
 </div>
   
   
@@ -547,18 +540,18 @@ objc_msgSend(receiver, selector, arg1, arg2, &hellip;)</p>
 
 
   <div class="entry-content"><p>1、理解git在本地常用的操作
-  （1）git status命令的作用，即从查看本地仓库中出现了的修改和变化的角度去想，如添加、修改和删除文件的操作。比较常见的就是添加新的文件和修改仓库中的某个文件。该命令方便我们查看我们在本地所做的一些修改。 <br/>
-   2）git本地操作的三个区域<br/>
+  （1）git status命令的作用，即从查看本地仓库中出现了的修改和变化的角度去想，如添加、修改和删除文件的操作。比较常见的就是添加新的文件和修改仓库中的某个文件。该命令方便我们查看我们在本地所做的一些修改。 <br />
+   2）git本地操作的三个区域<br />
          工作区  暂存区  版本库</p>
 
-<p>   1、下面以新增加的文件为例，通过git status查看，它是Untracked files（未跟踪的文件）－》工作区。运行git add－》暂存区。再运行git commit－》本地版本库。
+<p>1、下面以新增加的文件为例，通过git status查看，它是Untracked files（未跟踪的文件）－》工作区。运行git add－》暂存区。再运行git commit－》本地版本库。
    如果在暂存区的时候对这个文件进行了修改，通过git status查看，该文件一个还在暂存区Changes to be committed，一个在工作区Changes not staged for commit。</p>
 
-<p>   2、下面对修改本地仓库中的某个文件为例。通过status查看，它是Changes not staged for commit:－》工作区。运行git add－》暂存区，再运行git commit－》本地版本库。如果在暂存区对这个文件进行修改，结果与前面也是一样的。（即出现两个一样的文件）</p>
+<p>2、下面对修改本地仓库中的某个文件为例。通过status查看，它是Changes not staged for commit:－》工作区。运行git add－》暂存区，再运行git commit－》本地版本库。如果在暂存区对这个文件进行修改，结果与前面也是一样的。（即出现两个一样的文件）</p>
 
-<p>   3、下面对删除本地仓库中的某个文件为例，如果是手工删除或者使用［rm 文件名］删除，通过status查看，Changes not staged for commit－》工作区。运行git rm 文件名－－》暂存区。再运行git commit－》本地版本库，该文件就不再纳入版本管理 git rm &ndash;cached readme.txt  要移除跟踪但不删除文件，即从跟踪清单中删除。比如一些大型日志文件或者一堆 .a 编译文件比较适应  git mv file_from file_to  对文件改名</p>
+<p>3、下面对删除本地仓库中的某个文件为例，如果是手工删除或者使用［rm 文件名］删除，通过status查看，Changes not staged for commit－》工作区。运行git rm 文件名－－》暂存区。再运行git commit－》本地版本库，该文件就不再纳入版本管理 git rm –cached readme.txt  要移除跟踪但不删除文件，即从跟踪清单中删除。比如一些大型日志文件或者一堆 .a 编译文件比较适应  git mv file_from file_to  对文件改名</p>
 
-<p>   最后总结，在工作区，文件有可能是新增加未跟踪的，有可能是修改未暂存，有可能是暂存后又修改未暂存的，有可能是跟踪后暂存然后修改未暂存的。开始总是会把未跟踪、未暂存、未提交这几种状态弄晕，其实只是表示一个状态，要与他实际的工作区域对应上，即从前面两个角度去分析。</p>
+<p>最后总结，在工作区，文件有可能是新增加未跟踪的，有可能是修改未暂存，有可能是暂存后又修改未暂存的，有可能是跟踪后暂存然后修改未暂存的。开始总是会把未跟踪、未暂存、未提交这几种状态弄晕，其实只是表示一个状态，要与他实际的工作区域对应上，即从前面两个角度去分析。</p>
 
 <p>2、远程仓库使用（注意与本地仓库进行区分）
    方式一：git clone git地址  克隆一个远程仓库到本地，会在本地当前目录下创建一个和远程仓库一样的文件夹，testlf。进入这个文件夹，就可以看到➜  testlf git:(master) . 用git管理项目的标识
@@ -575,7 +568,7 @@ objc_msgSend(receiver, selector, arg1, arg2, &hellip;)</p>
       注意：切换分支的时候最好保持一个清洁的工作区域。切换到下一个分支之前，保证工作区、暂存区的内容都已经提交。不然会混淆。并且它会和你即将检出的分支产生冲突从而阻止 Git 为你切换分支
       git branch   //不加任何参数，可以查看当前分支清单，分支前的＊号表示当前所在分支
       git branch -v //查看各个分支最后一个提交对象的信息
-      git branch &ndash;merged  //查看已经合并的分支
+      git branch –merged  //查看已经合并的分支
       git branch – no-merged  //查看没有合并的分支
       git branch -d 分支名 //可以删除已经合并了的，如果删除没有合并的，会提示错误
       git branch -D 分支名  //强制删除没有合并的分支
@@ -590,7 +583,7 @@ objc_msgSend(receiver, selector, arg1, arg2, &hellip;)</p>
 <p>这里执行：
 git merge iss53</p>
 
-<p>  Git 会用两个分支的末端（C4 和 C5）以及它们的共同祖先（C2）进行一次简单的三方合并计算。
+<p>Git 会用两个分支的末端（C4 和 C5）以及它们的共同祖先（C2）进行一次简单的三方合并计算。
 合并后的结果重新做一个新的快照，并自动创建一个指向它的提交对象（C6）。如下所示：</p>
 
 <p>Git 作了合并，但没有提交，如果有冲突会提示。
@@ -605,27 +598,27 @@ Automatic merge failed; fix conflicts and then commit the result.
 
 <p>运行 git add 将把它们标记为已解决状态 ，再运行一次 git status 来确认所有冲突都已解决，就可以提交了。</p>
 
-<p>  （4）长期分支理解</p>
+<p>（4）长期分支理解</p>
 
-<p>   master 分支中保留完全稳定的代码，即已经发布或即将发布的代码。 develop 或 next 的平行分支，专门用于后续的开发。一旦进入某种稳定状态，便可以把它合并到 master 里。
+<p>master 分支中保留完全稳定的代码，即已经发布或即将发布的代码。 develop 或 next 的平行分支，专门用于后续的开发。一旦进入某种稳定状态，便可以把它合并到 master 里。
      下面是书本上的一个例子，起先我们在 master 工作到 C1，然后开始一个新分支 iss91 尝试修复 91 号缺陷，提交到 C6 的时候，又冒出一个解决该问题的新办法，于是从之前 C4 的地方又分出一个分支 iss91v2，干到 C8 的时候，又回到主干 master 中提交了 C9 和 C10，再回到iss91v2 继续工作，提交 C11，接着，又冒出个不太确定的想法，从 master 的最新提交 C10 处开了个新的分支 dumbidea 做些试验。</p>
 
-<p>   对于从之前 C4 的地方又分出一个分支 iss91v2，我一直都不太明白，是怎么回到分支的某个commit的。原来git还有一个很高级的命令
-<a href="http://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000/0013744142037508cf42e51debf49668810645e02887691000">http://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000/0013744142037508cf42e51debf49668810645e02887691000</a></p>
+<p>对于从之前 C4 的地方又分出一个分支 iss91v2，我一直都不太明白，是怎么回到分支的某个commit的。原来git还有一个很高级的命令
+http://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000/0013744142037508cf42e51debf49668810645e02887691000</p>
 
-<p> （5）版本回退命令
-   git reset &ndash;hard HEAD^
- 因为Git必须知道当前版本是哪个版本，在Git中，用HEAD表示当前版本，也就是最新的提交（通过git log／git log &ndash;pretty=oneline），
+<p>（5）版本回退命令
+   git reset –hard HEAD^
+ 因为Git必须知道当前版本是哪个版本，在Git中，用HEAD表示当前版本，也就是最新的提交（通过git log／git log –pretty=oneline），
 可以查看提交的commit号。上一个版本就是HEAD^，上上一个版本就是HEAD^^，当然往上100个版本写100个^比较容易数不过来，所以写成HEAD~100。
 回退到相应版本之后，查看相应文件，就会发现也会回到之前修改的状态。通过git log查看版本库也会发现。回退版本之前的版本都没有了。
       1、如果想回到之前最新的版本，怎么办，
 只要命令行终端没有关闭，找到之前git log查看的相应版本的commitid，然后使用下面的命令即可
-git reset &ndash;hard 命令号（取前几位就可以了），然后再查看相应文件，发现又回到最新的了。
+git reset –hard 命令号（取前几位就可以了），然后再查看相应文件，发现又回到最新的了。
 2、如果关闭电脑，关闭命令行终端后，想回到之前最新的版本，怎么办
 使用git reflog  就可以查看每一次命令的记录，然后就可以找到相应版本的commitid号</p>
 
-<p>   总结
-   HEAD指向的版本就是当前版本，因此，Git允许我们在版本的历史之间穿梭，使用命令git reset &ndash;hard commit_id。
+<p>总结
+   HEAD指向的版本就是当前版本，因此，Git允许我们在版本的历史之间穿梭，使用命令git reset –hard commit_id。
 穿梭前，用git log可以查看提交历史，以便确定要回退到哪个版本。
 要重返未来，用git reflog查看命令历史，以便确定要回到未来的哪个版本。</p>
 
@@ -643,21 +636,21 @@ Delta compression using up to 8 threads.
 Compressing objects: 100% (3/3), done.
 Writing objects: 100% (4/4), 353 bytes | 0 bytes/s, done.
 Total 4 (delta 2), reused 0 (delta 0)
-remote:
+remote: 
 remote: Create pull request for new-remote-branch:
 remote:   git分支
-remote:
+remote: 
 To git地址
- * [new branch]      master -> new-remote-branch
-➜  gcdTestForGit git:(master)
+ * [new branch]      master -&gt; new-remote-branch
+➜  gcdTestForGit git:(master) 
    （2）跟踪某个远程分支 方法：  从远程分支 checkout 出对应的本地分支，即相当于在本地创建一个与远程一样的分支，进行跟踪
       创建方式：
       git checkout -b master origin/master   ／／从远程分支新建并切换到master 本地分支，其内容同远程分支 origin/master 一致，这样你就可以在里面继续开发了   。其实这些在git clone  的时候git都给我们做好了。但是如果是其他git add 的远程分支，我们就需要手动去做这些操作。
-➜  gcdTestForGit git:(master) git checkout -b test-link-remote origin/new-remote-branch<br/>
+➜  gcdTestForGit git:(master) git checkout -b test-link-remote origin/new-remote-branch<br />
 Branch test-link-remote set up to track remote branch new-remote-branch from origin.
-Switched to a new branch &lsquo;test-link-remote&rsquo;
-➜  gcdTestForGit git:(test-link-remote)
-      git checkout &ndash;track origin/master    ／／1.6.2 以上版本的 Git，对上面第一种创建方式进行简化。要为本地分支设定不同于远程分支的名字，就使用第一种方式换个名字即可。
+Switched to a new branch ‘test-link-remote’
+➜  gcdTestForGit git:(test-link-remote) 
+      git checkout –track origin/master    ／／1.6.2 以上版本的 Git，对上面第一种创建方式进行简化。要为本地分支设定不同于远程分支的名字，就使用第一种方式换个名字即可。
       作用：1、跟踪分支里输入 git push，Git 会自行推断应该向哪个服务器的哪个分支推送数据。
            2、同样，在这些分支里运行 git pull 会获取所有远程索引，并把它们的数据都合并到本地分支中来。
       注意：如果要在特定的远程分支中工作，提交数据，必须先按照上面的方式在本地先跟踪这个分支（比如development分支），然后在这个本地分支下再新建分支（如bugfix/mybranch，进行操作，完成后提交到远程的bugfix/mybranch分支，最后在远程合并到development分支
@@ -680,52 +673,52 @@ Automatic merge failed; fix conflicts and then commit the result.
 具体解决冲突如下：
 ➜  gcdTestForGit git:(master) ✗ git status
 On branch master
-Your branch is up-to-date with &lsquo;origin/master&rsquo;.
+Your branch is up-to-date with ‘origin/master’.
 You have unmerged paths.
-  (fix conflicts and run &ldquo;git commit&rdquo;)</p>
+  (fix conflicts and run “git commit”)</p>
 
 <p>Unmerged paths:
-  (use &ldquo;git add <file>&hellip;&rdquo; to mark resolution)</p>
+  (use “git add <file>..." to mark resolution)</file></p>
 
-<p> both modified:   test.txt
+<p>both modified:   test.txt
  both modified:   test1.txt</p>
 
-<p>no changes added to commit (use &ldquo;git add&rdquo; and/or &ldquo;git commit -a&rdquo;)
+<p>no changes added to commit (use “git add” and/or “git commit -a”)
 ➜  gcdTestForGit git:(master) ✗ vim test.txt
 ➜  gcdTestForGit git:(master) ✗ vim test1.txt
 ➜  gcdTestForGit git:(master) ✗ git status
 On branch master
-Your branch is up-to-date with &lsquo;origin/master&rsquo;.
+Your branch is up-to-date with ‘origin/master’.
 You have unmerged paths.
-  (fix conflicts and run &ldquo;git commit&rdquo;)</p>
+  (fix conflicts and run “git commit”)</p>
 
 <p>Unmerged paths:
-  (use &ldquo;git add <file>&hellip;&rdquo; to mark resolution)</p>
+  (use “git add <file>..." to mark resolution)</file></p>
 
-<p> both modified:   test.txt
+<p>both modified:   test.txt
  both modified:   test1.txt</p>
 
-<p>no changes added to commit (use &ldquo;git add&rdquo; and/or &ldquo;git commit -a&rdquo;)
+<p>no changes added to commit (use “git add” and/or “git commit -a”)
 ➜  gcdTestForGit git:(master) ✗ git add .
 ➜  gcdTestForGit git:(master) ✗ git status
 On branch master
-Your branch is up-to-date with &lsquo;origin/master&rsquo;.
+Your branch is up-to-date with ‘origin/master’.
 All conflicts fixed but you are still merging.
-  (use &ldquo;git commit&rdquo; to conclude merge)</p>
+  (use “git commit” to conclude merge)</p>
 
 <p>Changes to be committed:</p>
 
-<p> modified:   test.txt
+<p>modified:   test.txt
  modified:   test1.txt</p>
 
-<p>➜  gcdTestForGit git:(master) ✗ git commit -m &lsquo;submit-git-test-10&rsquo;
+<p>➜  gcdTestForGit git:(master) ✗ git commit -m ‘submit-git-test-10’ 
 [master 95552e2] submit-git-test-10
 ➜  gcdTestForGit git:(master) gi status
 zsh: command not found: gi
 ➜  gcdTestForGit git:(master) git status
 On branch master
-Your branch is ahead of &lsquo;origin/master&rsquo; by 3 commits.
-  (use &ldquo;git push&rdquo; to publish your local commits)
+Your branch is ahead of ‘origin/master’ by 3 commits.
+  (use “git push” to publish your local commits)
 nothing to commit, working directory clean
 ➜  gcdTestForGit git:(master) git push origin master
 Counting objects: 5, done.
@@ -733,8 +726,8 @@ Delta compression using up to 8 threads.
 Compressing objects: 100% (5/5), done.
 Writing objects: 100% (5/5), 545 bytes | 0 bytes/s, done.
 Total 5 (delta 2), reused 0 (delta 0)
-To git分支  master -> master
-➜  gcdTestForGit git:(master)
+To git分支  master -&gt; master
+➜  gcdTestForGit git:(master) 
 远程分支合并后的结果如下：</p>
 
 <p>删除远程分支
@@ -749,13 +742,13 @@ Delta compression using up to 8 threads.
 Compressing objects: 100% (4/4), done.
 Writing objects: 100% (4/4), 363 bytes | 0 bytes/s, done.
 Total 4 (delta 3), reused 0 (delta 0)
-remote:
+remote: 
 remote: Create pull request for new-remote-branch:
 remote:   git分支
-remote:
+remote: 
 To git地址
-   103f55f..852a6ea  test-local-branch -> new-remote-branch
-➜  gcdTestForGit git:(test-local-branch)
+   103f55f..852a6ea  test-local-branch -&gt; new-remote-branch
+➜  gcdTestForGit git:(test-local-branch) 
 结果：test-local-branch分支变成了跟踪new-remote-branch远程分支的一个本地分支
 并且切换到远程分支new-remote-branch中，可以看到在本地test-local-branch分支中做的修改，说明push成功了。
 结论：在本地创建一个分支的时候，（跟踪某个远程分支的作用是可以fetch／pull这个远程分支的数据，不跟踪貌似也能拉取它的数据，所以我觉得本地分支和远程分支在push之前好像没有很大联系），在push操作之前，一定要对远程分支进行fetch／pull的操作拉取新的更新数据，然后push。
@@ -763,7 +756,7 @@ To git地址
 
 <p>所以在做项目时应该是每个人创建属于自己的远程分支（所以push都只覆盖自己），然后某个人去把这个远程分支进行merge时再去解决冲突。最后可能就把merge后的分支再与主远程分支merge
 下面这篇博客讲了多人协作开发中git在不同场景下的使用，可以多看看，多试着练习一下，博客最后有人提了一个问题，其实也是我不太懂的。就是怎么建远程分支，好像我前面都是建本地分支时设置一个远程分支，然后就自动生成， 问了一下我们项目时开一个task的时候，可以在那个网页上建远程分支就可以了。
-<a href="http://limboy.me/tech/2011/02/25/git-workflow-with-blog-demo.html">http://limboy.me/tech/2011/02/25/git-workflow-with-blog-demo.html</a></p>
+http://limboy.me/tech/2011/02/25/git-workflow-with-blog-demo.html</p>
 
 <p>下面是我做的一次练习测试，加深我对git多人协作开发流程的理解</p>
 
@@ -772,21 +765,21 @@ To git地址
 <p>git:(new-remote-branch) git push origin new-remote-branch。结果如下所示</p>
 
 <p>然后利用版本回退，回到前面的第二个commit
-git:(new-remote-branch) git reset &ndash;hard HEAD~2</p>
+git:(new-remote-branch) git reset –hard HEAD~2</p>
 
 <p>此时还会提示你要git pull远程上的commit，但是你想把前面的两个commit都删除。</p>
 
 <p>➜  gcdTestForGit git:(new-remote-branch) git status
 On branch new-remote-branch
-Your branch is behind &lsquo;origin/new-remote-branch&rsquo; by 2 commits, and can be fast-forwarded.
-  (use &ldquo;git pull&rdquo; to update your local branch)
+Your branch is behind ‘origin/new-remote-branch’ by 2 commits, and can be fast-forwarded.
+  (use “git pull” to update your local branch)
 nothing to commit, working directory clean</p>
 
 <p>这时又在这里做了多次commit。即出现分支的分化（分叉），直接push的话，git会默认对这些分支进行一个merge。如果有冲突就会出现错误，不知道是不是的。</p>
 
 <p>➜  gcdTestForGit git:(new-remote-branch) vim test1.txt
 ➜  gcdTestForGit git:(new-remote-branch) ✗ git add .
-➜  gcdTestForGit git:(new-remote-branch) ✗ git commit -m &lsquo;submit-08-14-06&rsquo;
+➜  gcdTestForGit git:(new-remote-branch) ✗ git commit -m ‘submit-08-14-06’ 
 [new-remote-branch cfb560b] submit-08-14-06
  1 file changed, 1 insertion(+), 1 deletion(-)</p>
 
@@ -798,20 +791,20 @@ nothing to commit, working directory clean</p>
 
 <p>➜  gcdTestForGit git:(new-remote-branch) git push origin new-remote-branch
 To git地址
- ! [rejected]        new-remote-branch -> new-remote-branch (non-fast-forward)
-error: failed to push some refs to &lsquo;git地址&rsquo;
+ ! [rejected]        new-remote-branch -&gt; new-remote-branch (non-fast-forward)
+error: failed to push some refs to ‘git地址’
 hint: Updates were rejected because the tip of your current branch is behind
 hint: its remote counterpart. Integrate the remote changes (e.g.
-hint: &lsquo;git pull &hellip;&rsquo;) before pushing again.
-hint: See the &lsquo;Note about fast-forwards&rsquo; in &lsquo;git push &ndash;help&rsquo; for details.</p>
+hint: ‘git pull …’) before pushing again.
+hint: See the ‘Note about fast-forwards’ in ‘git push –help’ for details.</p>
 
 <p>然后运行git status，提示你要先pull</p>
 
 <p>➜  gcdTestForGit git:(new-remote-branch) git status
 On branch new-remote-branch
-Your branch and &lsquo;origin/new-remote-branch&rsquo; have diverged,
+Your branch and ‘origin/new-remote-branch’ have diverged,
 and have 2 and 2 different commits each, respectively.
-  (use &ldquo;git pull&rdquo; to merge the remote branch into yours)
+  (use “git pull” to merge the remote branch into yours)
 nothing to commit, working directory clean
 git pull之后就会告诉你有哪些冲突，然后解决冲突后就可以了。</p>
 
@@ -824,7 +817,7 @@ Automatic merge failed; fix conflicts and then commit the result.</p>
 
 <p>➜  gcdTestForGit git:(new-remote-branch) ✗ vim test1.txt
 ➜  gcdTestForGit git:(new-remote-branch) ✗ git add .
-➜  gcdTestForGit git:(new-remote-branch) ✗ git commit -m &lsquo;submit-08-14-08&rsquo;
+➜  gcdTestForGit git:(new-remote-branch) ✗ git commit -m ‘submit-08-14-08’ 
 [new-remote-branch 3dd204d] submit-08-14-08
 ➜  gcdTestForGit git:(new-remote-branch) git push origin new-remote-branch
 Counting objects: 12, done.
@@ -837,7 +830,7 @@ remote: Create pull request for new-remote-branch:
 remote:   git分支
 remote:
 To git地址
-   c66c1bc..3dd204d  new-remote-branch -> new-remote-branch</p>
+   c66c1bc..3dd204d  new-remote-branch -&gt; new-remote-branch</p>
 
 <p>但是如果想强制将分叉本地分支覆盖掉远程分支上。而submit－08-14-04和submit－08-14－05两次commit的操作都删除的话，使用git push origin new-remote-branch。即加一个－f的参数。就可以不记性pull然后解决冲突了。</p>
 
@@ -847,17 +840,17 @@ To git地址
 <p>git rebase的理解：修改当前分支的基底分支，在基底分支上重演一遍分支中所做的修改，这个命令执行后不会出现马上要解决冲突，因为它还是生成了一个分支，只有从新的基底分支merge这个分支的时候才可能出现要解决冲突。</p>
 
 <p>［第一部分］
-<a href="http://blog.csdn.net/u010520912/article/details/18993001">http://blog.csdn.net/u010520912/article/details/18993001</a>
+http://blog.csdn.net/u010520912/article/details/18993001
 创建github账号及上传代码的步骤
 github账号地址
-<a href="https://github.com/amyliangfang/lf/blob/master/c-01/c-01">https://github.com/amyliangfang/lf/blob/master/c-01/c-01</a>
+https://github.com/amyliangfang/lf/blob/master/c-01/c-01
 具体步骤：
 注册github账号－使用ssh密钥认证－创建本地仓库并上传代码到github</p>
 
 <p>参考书籍：
-<a href="http://git-scm.com/book/en/v2">http://git-scm.com/book/en/v2</a></p>
+http://git-scm.com/book/en/v2</p>
 
-<p><a href="http://pcottle.github.io/learnGitBranching/">http://pcottle.github.io/learnGitBranching/</a></p>
+<p>http://pcottle.github.io/learnGitBranching/</p>
 </div>
   
   

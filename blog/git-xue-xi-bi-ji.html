@@ -85,18 +85,18 @@
 
 
 <div class="entry-content"><p>1、理解git在本地常用的操作
-  （1）git status命令的作用，即从查看本地仓库中出现了的修改和变化的角度去想，如添加、修改和删除文件的操作。比较常见的就是添加新的文件和修改仓库中的某个文件。该命令方便我们查看我们在本地所做的一些修改。 <br/>
-   2）git本地操作的三个区域<br/>
+  （1）git status命令的作用，即从查看本地仓库中出现了的修改和变化的角度去想，如添加、修改和删除文件的操作。比较常见的就是添加新的文件和修改仓库中的某个文件。该命令方便我们查看我们在本地所做的一些修改。 <br />
+   2）git本地操作的三个区域<br />
          工作区  暂存区  版本库</p>
 
-<p>   1、下面以新增加的文件为例，通过git status查看，它是Untracked files（未跟踪的文件）－》工作区。运行git add－》暂存区。再运行git commit－》本地版本库。
+<p>1、下面以新增加的文件为例，通过git status查看，它是Untracked files（未跟踪的文件）－》工作区。运行git add－》暂存区。再运行git commit－》本地版本库。
    如果在暂存区的时候对这个文件进行了修改，通过git status查看，该文件一个还在暂存区Changes to be committed，一个在工作区Changes not staged for commit。</p>
 
-<p>   2、下面对修改本地仓库中的某个文件为例。通过status查看，它是Changes not staged for commit:－》工作区。运行git add－》暂存区，再运行git commit－》本地版本库。如果在暂存区对这个文件进行修改，结果与前面也是一样的。（即出现两个一样的文件）</p>
+<p>2、下面对修改本地仓库中的某个文件为例。通过status查看，它是Changes not staged for commit:－》工作区。运行git add－》暂存区，再运行git commit－》本地版本库。如果在暂存区对这个文件进行修改，结果与前面也是一样的。（即出现两个一样的文件）</p>
 
-<p>   3、下面对删除本地仓库中的某个文件为例，如果是手工删除或者使用［rm 文件名］删除，通过status查看，Changes not staged for commit－》工作区。运行git rm 文件名－－》暂存区。再运行git commit－》本地版本库，该文件就不再纳入版本管理 git rm &ndash;cached readme.txt  要移除跟踪但不删除文件，即从跟踪清单中删除。比如一些大型日志文件或者一堆 .a 编译文件比较适应  git mv file_from file_to  对文件改名</p>
+<p>3、下面对删除本地仓库中的某个文件为例，如果是手工删除或者使用［rm 文件名］删除，通过status查看，Changes not staged for commit－》工作区。运行git rm 文件名－－》暂存区。再运行git commit－》本地版本库，该文件就不再纳入版本管理 git rm –cached readme.txt  要移除跟踪但不删除文件，即从跟踪清单中删除。比如一些大型日志文件或者一堆 .a 编译文件比较适应  git mv file_from file_to  对文件改名</p>
 
-<p>   最后总结，在工作区，文件有可能是新增加未跟踪的，有可能是修改未暂存，有可能是暂存后又修改未暂存的，有可能是跟踪后暂存然后修改未暂存的。开始总是会把未跟踪、未暂存、未提交这几种状态弄晕，其实只是表示一个状态，要与他实际的工作区域对应上，即从前面两个角度去分析。</p>
+<p>最后总结，在工作区，文件有可能是新增加未跟踪的，有可能是修改未暂存，有可能是暂存后又修改未暂存的，有可能是跟踪后暂存然后修改未暂存的。开始总是会把未跟踪、未暂存、未提交这几种状态弄晕，其实只是表示一个状态，要与他实际的工作区域对应上，即从前面两个角度去分析。</p>
 
 <p>2、远程仓库使用（注意与本地仓库进行区分）
    方式一：git clone git地址  克隆一个远程仓库到本地，会在本地当前目录下创建一个和远程仓库一样的文件夹，testlf。进入这个文件夹，就可以看到➜  testlf git:(master) . 用git管理项目的标识
@@ -113,7 +113,7 @@
       注意：切换分支的时候最好保持一个清洁的工作区域。切换到下一个分支之前，保证工作区、暂存区的内容都已经提交。不然会混淆。并且它会和你即将检出的分支产生冲突从而阻止 Git 为你切换分支
       git branch   //不加任何参数，可以查看当前分支清单，分支前的＊号表示当前所在分支
       git branch -v //查看各个分支最后一个提交对象的信息
-      git branch &ndash;merged  //查看已经合并的分支
+      git branch –merged  //查看已经合并的分支
       git branch – no-merged  //查看没有合并的分支
       git branch -d 分支名 //可以删除已经合并了的，如果删除没有合并的，会提示错误
       git branch -D 分支名  //强制删除没有合并的分支
@@ -128,7 +128,7 @@
 <p>这里执行：
 git merge iss53</p>
 
-<p>  Git 会用两个分支的末端（C4 和 C5）以及它们的共同祖先（C2）进行一次简单的三方合并计算。
+<p>Git 会用两个分支的末端（C4 和 C5）以及它们的共同祖先（C2）进行一次简单的三方合并计算。
 合并后的结果重新做一个新的快照，并自动创建一个指向它的提交对象（C6）。如下所示：</p>
 
 <p>Git 作了合并，但没有提交，如果有冲突会提示。
@@ -143,27 +143,27 @@ Automatic merge failed; fix conflicts and then commit the result.
 
 <p>运行 git add 将把它们标记为已解决状态 ，再运行一次 git status 来确认所有冲突都已解决，就可以提交了。</p>
 
-<p>  （4）长期分支理解</p>
+<p>（4）长期分支理解</p>
 
-<p>   master 分支中保留完全稳定的代码，即已经发布或即将发布的代码。 develop 或 next 的平行分支，专门用于后续的开发。一旦进入某种稳定状态，便可以把它合并到 master 里。
+<p>master 分支中保留完全稳定的代码，即已经发布或即将发布的代码。 develop 或 next 的平行分支，专门用于后续的开发。一旦进入某种稳定状态，便可以把它合并到 master 里。
      下面是书本上的一个例子，起先我们在 master 工作到 C1，然后开始一个新分支 iss91 尝试修复 91 号缺陷，提交到 C6 的时候，又冒出一个解决该问题的新办法，于是从之前 C4 的地方又分出一个分支 iss91v2，干到 C8 的时候，又回到主干 master 中提交了 C9 和 C10，再回到iss91v2 继续工作，提交 C11，接着，又冒出个不太确定的想法，从 master 的最新提交 C10 处开了个新的分支 dumbidea 做些试验。</p>
 
-<p>   对于从之前 C4 的地方又分出一个分支 iss91v2，我一直都不太明白，是怎么回到分支的某个commit的。原来git还有一个很高级的命令
-<a href="http://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000/0013744142037508cf42e51debf49668810645e02887691000">http://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000/0013744142037508cf42e51debf49668810645e02887691000</a></p>
+<p>对于从之前 C4 的地方又分出一个分支 iss91v2，我一直都不太明白，是怎么回到分支的某个commit的。原来git还有一个很高级的命令
+http://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000/0013744142037508cf42e51debf49668810645e02887691000</p>
 
-<p> （5）版本回退命令
-   git reset &ndash;hard HEAD^
- 因为Git必须知道当前版本是哪个版本，在Git中，用HEAD表示当前版本，也就是最新的提交（通过git log／git log &ndash;pretty=oneline），
+<p>（5）版本回退命令
+   git reset –hard HEAD^
+ 因为Git必须知道当前版本是哪个版本，在Git中，用HEAD表示当前版本，也就是最新的提交（通过git log／git log –pretty=oneline），
 可以查看提交的commit号。上一个版本就是HEAD^，上上一个版本就是HEAD^^，当然往上100个版本写100个^比较容易数不过来，所以写成HEAD~100。
 回退到相应版本之后，查看相应文件，就会发现也会回到之前修改的状态。通过git log查看版本库也会发现。回退版本之前的版本都没有了。
       1、如果想回到之前最新的版本，怎么办，
 只要命令行终端没有关闭，找到之前git log查看的相应版本的commitid，然后使用下面的命令即可
-git reset &ndash;hard 命令号（取前几位就可以了），然后再查看相应文件，发现又回到最新的了。
+git reset –hard 命令号（取前几位就可以了），然后再查看相应文件，发现又回到最新的了。
 2、如果关闭电脑，关闭命令行终端后，想回到之前最新的版本，怎么办
 使用git reflog  就可以查看每一次命令的记录，然后就可以找到相应版本的commitid号</p>
 
-<p>   总结
-   HEAD指向的版本就是当前版本，因此，Git允许我们在版本的历史之间穿梭，使用命令git reset &ndash;hard commit_id。
+<p>总结
+   HEAD指向的版本就是当前版本，因此，Git允许我们在版本的历史之间穿梭，使用命令git reset –hard commit_id。
 穿梭前，用git log可以查看提交历史，以便确定要回退到哪个版本。
 要重返未来，用git reflog查看命令历史，以便确定要回到未来的哪个版本。</p>
 
@@ -181,21 +181,21 @@ Delta compression using up to 8 threads.
 Compressing objects: 100% (3/3), done.
 Writing objects: 100% (4/4), 353 bytes | 0 bytes/s, done.
 Total 4 (delta 2), reused 0 (delta 0)
-remote:
+remote: 
 remote: Create pull request for new-remote-branch:
 remote:   git分支
-remote:
+remote: 
 To git地址
- * [new branch]      master -> new-remote-branch
-➜  gcdTestForGit git:(master)
+ * [new branch]      master -&gt; new-remote-branch
+➜  gcdTestForGit git:(master) 
    （2）跟踪某个远程分支 方法：  从远程分支 checkout 出对应的本地分支，即相当于在本地创建一个与远程一样的分支，进行跟踪
       创建方式：
       git checkout -b master origin/master   ／／从远程分支新建并切换到master 本地分支，其内容同远程分支 origin/master 一致，这样你就可以在里面继续开发了   。其实这些在git clone  的时候git都给我们做好了。但是如果是其他git add 的远程分支，我们就需要手动去做这些操作。
-➜  gcdTestForGit git:(master) git checkout -b test-link-remote origin/new-remote-branch<br/>
+➜  gcdTestForGit git:(master) git checkout -b test-link-remote origin/new-remote-branch<br />
 Branch test-link-remote set up to track remote branch new-remote-branch from origin.
-Switched to a new branch &lsquo;test-link-remote&rsquo;
-➜  gcdTestForGit git:(test-link-remote)
-      git checkout &ndash;track origin/master    ／／1.6.2 以上版本的 Git，对上面第一种创建方式进行简化。要为本地分支设定不同于远程分支的名字，就使用第一种方式换个名字即可。
+Switched to a new branch ‘test-link-remote’
+➜  gcdTestForGit git:(test-link-remote) 
+      git checkout –track origin/master    ／／1.6.2 以上版本的 Git，对上面第一种创建方式进行简化。要为本地分支设定不同于远程分支的名字，就使用第一种方式换个名字即可。
       作用：1、跟踪分支里输入 git push，Git 会自行推断应该向哪个服务器的哪个分支推送数据。
            2、同样，在这些分支里运行 git pull 会获取所有远程索引，并把它们的数据都合并到本地分支中来。
       注意：如果要在特定的远程分支中工作，提交数据，必须先按照上面的方式在本地先跟踪这个分支（比如development分支），然后在这个本地分支下再新建分支（如bugfix/mybranch，进行操作，完成后提交到远程的bugfix/mybranch分支，最后在远程合并到development分支
@@ -218,52 +218,52 @@ Automatic merge failed; fix conflicts and then commit the result.
 具体解决冲突如下：
 ➜  gcdTestForGit git:(master) ✗ git status
 On branch master
-Your branch is up-to-date with &lsquo;origin/master&rsquo;.
+Your branch is up-to-date with ‘origin/master’.
 You have unmerged paths.
-  (fix conflicts and run &ldquo;git commit&rdquo;)</p>
+  (fix conflicts and run “git commit”)</p>
 
 <p>Unmerged paths:
-  (use &ldquo;git add <file>&hellip;&rdquo; to mark resolution)</p>
+  (use “git add <file>..." to mark resolution)</file></p>
 
-<p> both modified:   test.txt
+<p>both modified:   test.txt
  both modified:   test1.txt</p>
 
-<p>no changes added to commit (use &ldquo;git add&rdquo; and/or &ldquo;git commit -a&rdquo;)
+<p>no changes added to commit (use “git add” and/or “git commit -a”)
 ➜  gcdTestForGit git:(master) ✗ vim test.txt
 ➜  gcdTestForGit git:(master) ✗ vim test1.txt
 ➜  gcdTestForGit git:(master) ✗ git status
 On branch master
-Your branch is up-to-date with &lsquo;origin/master&rsquo;.
+Your branch is up-to-date with ‘origin/master’.
 You have unmerged paths.
-  (fix conflicts and run &ldquo;git commit&rdquo;)</p>
+  (fix conflicts and run “git commit”)</p>
 
 <p>Unmerged paths:
-  (use &ldquo;git add <file>&hellip;&rdquo; to mark resolution)</p>
+  (use “git add <file>..." to mark resolution)</file></p>
 
-<p> both modified:   test.txt
+<p>both modified:   test.txt
  both modified:   test1.txt</p>
 
-<p>no changes added to commit (use &ldquo;git add&rdquo; and/or &ldquo;git commit -a&rdquo;)
+<p>no changes added to commit (use “git add” and/or “git commit -a”)
 ➜  gcdTestForGit git:(master) ✗ git add .
 ➜  gcdTestForGit git:(master) ✗ git status
 On branch master
-Your branch is up-to-date with &lsquo;origin/master&rsquo;.
+Your branch is up-to-date with ‘origin/master’.
 All conflicts fixed but you are still merging.
-  (use &ldquo;git commit&rdquo; to conclude merge)</p>
+  (use “git commit” to conclude merge)</p>
 
 <p>Changes to be committed:</p>
 
-<p> modified:   test.txt
+<p>modified:   test.txt
  modified:   test1.txt</p>
 
-<p>➜  gcdTestForGit git:(master) ✗ git commit -m &lsquo;submit-git-test-10&rsquo;
+<p>➜  gcdTestForGit git:(master) ✗ git commit -m ‘submit-git-test-10’ 
 [master 95552e2] submit-git-test-10
 ➜  gcdTestForGit git:(master) gi status
 zsh: command not found: gi
 ➜  gcdTestForGit git:(master) git status
 On branch master
-Your branch is ahead of &lsquo;origin/master&rsquo; by 3 commits.
-  (use &ldquo;git push&rdquo; to publish your local commits)
+Your branch is ahead of ‘origin/master’ by 3 commits.
+  (use “git push” to publish your local commits)
 nothing to commit, working directory clean
 ➜  gcdTestForGit git:(master) git push origin master
 Counting objects: 5, done.
@@ -271,8 +271,8 @@ Delta compression using up to 8 threads.
 Compressing objects: 100% (5/5), done.
 Writing objects: 100% (5/5), 545 bytes | 0 bytes/s, done.
 Total 5 (delta 2), reused 0 (delta 0)
-To git分支  master -> master
-➜  gcdTestForGit git:(master)
+To git分支  master -&gt; master
+➜  gcdTestForGit git:(master) 
 远程分支合并后的结果如下：</p>
 
 <p>删除远程分支
@@ -287,13 +287,13 @@ Delta compression using up to 8 threads.
 Compressing objects: 100% (4/4), done.
 Writing objects: 100% (4/4), 363 bytes | 0 bytes/s, done.
 Total 4 (delta 3), reused 0 (delta 0)
-remote:
+remote: 
 remote: Create pull request for new-remote-branch:
 remote:   git分支
-remote:
+remote: 
 To git地址
-   103f55f..852a6ea  test-local-branch -> new-remote-branch
-➜  gcdTestForGit git:(test-local-branch)
+   103f55f..852a6ea  test-local-branch -&gt; new-remote-branch
+➜  gcdTestForGit git:(test-local-branch) 
 结果：test-local-branch分支变成了跟踪new-remote-branch远程分支的一个本地分支
 并且切换到远程分支new-remote-branch中，可以看到在本地test-local-branch分支中做的修改，说明push成功了。
 结论：在本地创建一个分支的时候，（跟踪某个远程分支的作用是可以fetch／pull这个远程分支的数据，不跟踪貌似也能拉取它的数据，所以我觉得本地分支和远程分支在push之前好像没有很大联系），在push操作之前，一定要对远程分支进行fetch／pull的操作拉取新的更新数据，然后push。
@@ -301,7 +301,7 @@ To git地址
 
 <p>所以在做项目时应该是每个人创建属于自己的远程分支（所以push都只覆盖自己），然后某个人去把这个远程分支进行merge时再去解决冲突。最后可能就把merge后的分支再与主远程分支merge
 下面这篇博客讲了多人协作开发中git在不同场景下的使用，可以多看看，多试着练习一下，博客最后有人提了一个问题，其实也是我不太懂的。就是怎么建远程分支，好像我前面都是建本地分支时设置一个远程分支，然后就自动生成， 问了一下我们项目时开一个task的时候，可以在那个网页上建远程分支就可以了。
-<a href="http://limboy.me/tech/2011/02/25/git-workflow-with-blog-demo.html">http://limboy.me/tech/2011/02/25/git-workflow-with-blog-demo.html</a></p>
+http://limboy.me/tech/2011/02/25/git-workflow-with-blog-demo.html</p>
 
 <p>下面是我做的一次练习测试，加深我对git多人协作开发流程的理解</p>
 
@@ -310,21 +310,21 @@ To git地址
 <p>git:(new-remote-branch) git push origin new-remote-branch。结果如下所示</p>
 
 <p>然后利用版本回退，回到前面的第二个commit
-git:(new-remote-branch) git reset &ndash;hard HEAD~2</p>
+git:(new-remote-branch) git reset –hard HEAD~2</p>
 
 <p>此时还会提示你要git pull远程上的commit，但是你想把前面的两个commit都删除。</p>
 
 <p>➜  gcdTestForGit git:(new-remote-branch) git status
 On branch new-remote-branch
-Your branch is behind &lsquo;origin/new-remote-branch&rsquo; by 2 commits, and can be fast-forwarded.
-  (use &ldquo;git pull&rdquo; to update your local branch)
+Your branch is behind ‘origin/new-remote-branch’ by 2 commits, and can be fast-forwarded.
+  (use “git pull” to update your local branch)
 nothing to commit, working directory clean</p>
 
 <p>这时又在这里做了多次commit。即出现分支的分化（分叉），直接push的话，git会默认对这些分支进行一个merge。如果有冲突就会出现错误，不知道是不是的。</p>
 
 <p>➜  gcdTestForGit git:(new-remote-branch) vim test1.txt
 ➜  gcdTestForGit git:(new-remote-branch) ✗ git add .
-➜  gcdTestForGit git:(new-remote-branch) ✗ git commit -m &lsquo;submit-08-14-06&rsquo;
+➜  gcdTestForGit git:(new-remote-branch) ✗ git commit -m ‘submit-08-14-06’ 
 [new-remote-branch cfb560b] submit-08-14-06
  1 file changed, 1 insertion(+), 1 deletion(-)</p>
 
@@ -336,20 +336,20 @@ nothing to commit, working directory clean</p>
 
 <p>➜  gcdTestForGit git:(new-remote-branch) git push origin new-remote-branch
 To git地址
- ! [rejected]        new-remote-branch -> new-remote-branch (non-fast-forward)
-error: failed to push some refs to &lsquo;git地址&rsquo;
+ ! [rejected]        new-remote-branch -&gt; new-remote-branch (non-fast-forward)
+error: failed to push some refs to ‘git地址’
 hint: Updates were rejected because the tip of your current branch is behind
 hint: its remote counterpart. Integrate the remote changes (e.g.
-hint: &lsquo;git pull &hellip;&rsquo;) before pushing again.
-hint: See the &lsquo;Note about fast-forwards&rsquo; in &lsquo;git push &ndash;help&rsquo; for details.</p>
+hint: ‘git pull …’) before pushing again.
+hint: See the ‘Note about fast-forwards’ in ‘git push –help’ for details.</p>
 
 <p>然后运行git status，提示你要先pull</p>
 
 <p>➜  gcdTestForGit git:(new-remote-branch) git status
 On branch new-remote-branch
-Your branch and &lsquo;origin/new-remote-branch&rsquo; have diverged,
+Your branch and ‘origin/new-remote-branch’ have diverged,
 and have 2 and 2 different commits each, respectively.
-  (use &ldquo;git pull&rdquo; to merge the remote branch into yours)
+  (use “git pull” to merge the remote branch into yours)
 nothing to commit, working directory clean
 git pull之后就会告诉你有哪些冲突，然后解决冲突后就可以了。</p>
 
@@ -362,7 +362,7 @@ Automatic merge failed; fix conflicts and then commit the result.</p>
 
 <p>➜  gcdTestForGit git:(new-remote-branch) ✗ vim test1.txt
 ➜  gcdTestForGit git:(new-remote-branch) ✗ git add .
-➜  gcdTestForGit git:(new-remote-branch) ✗ git commit -m &lsquo;submit-08-14-08&rsquo;
+➜  gcdTestForGit git:(new-remote-branch) ✗ git commit -m ‘submit-08-14-08’ 
 [new-remote-branch 3dd204d] submit-08-14-08
 ➜  gcdTestForGit git:(new-remote-branch) git push origin new-remote-branch
 Counting objects: 12, done.
@@ -375,7 +375,7 @@ remote: Create pull request for new-remote-branch:
 remote:   git分支
 remote:
 To git地址
-   c66c1bc..3dd204d  new-remote-branch -> new-remote-branch</p>
+   c66c1bc..3dd204d  new-remote-branch -&gt; new-remote-branch</p>
 
 <p>但是如果想强制将分叉本地分支覆盖掉远程分支上。而submit－08-14-04和submit－08-14－05两次commit的操作都删除的话，使用git push origin new-remote-branch。即加一个－f的参数。就可以不记性pull然后解决冲突了。</p>
 
@@ -385,17 +385,17 @@ To git地址
 <p>git rebase的理解：修改当前分支的基底分支，在基底分支上重演一遍分支中所做的修改，这个命令执行后不会出现马上要解决冲突，因为它还是生成了一个分支，只有从新的基底分支merge这个分支的时候才可能出现要解决冲突。</p>
 
 <p>［第一部分］
-<a href="http://blog.csdn.net/u010520912/article/details/18993001">http://blog.csdn.net/u010520912/article/details/18993001</a>
+http://blog.csdn.net/u010520912/article/details/18993001
 创建github账号及上传代码的步骤
 github账号地址
-<a href="https://github.com/amyliangfang/lf/blob/master/c-01/c-01">https://github.com/amyliangfang/lf/blob/master/c-01/c-01</a>
+https://github.com/amyliangfang/lf/blob/master/c-01/c-01
 具体步骤：
 注册github账号－使用ssh密钥认证－创建本地仓库并上传代码到github</p>
 
 <p>参考书籍：
-<a href="http://git-scm.com/book/en/v2">http://git-scm.com/book/en/v2</a></p>
+http://git-scm.com/book/en/v2</p>
 
-<p><a href="http://pcottle.github.io/learnGitBranching/">http://pcottle.github.io/learnGitBranching/</a></p>
+<p>http://pcottle.github.io/learnGitBranching/</p>
 </div>
 
 

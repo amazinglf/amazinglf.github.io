@@ -87,31 +87,28 @@
 <div class="entry-content"><p>一、SDWebImage库的组成</p>
 
 <pre><code>  1、通过UIImageView分类提供的常用方法
-
+  
   （1）在UIImageView (WebCache)分类提供的方法中，可以看到这些方法最终都调用了下面这个方法，在这个方法中封装了对图片进行缓存和异步下载的功能
   - (void)sd_setImageWithURL:(NSURL *)url placeholderImage:(UIImage *)placeholder options:(SDWebImageOptions)options completed:(SDWebImageCompletionBlock)completedBlock;
      在这个分类中还提供了与展示动画图片相关的API：- (void)sd_setAnimationImagesWithURLs:(NSArray *)arrayOfURLs;，即设置一组图片的url，并且以动画的形式展示。
-
+     
   （2）UIImageView (HighlightedWebCache)：这个分类提供了为UIImageView设置高亮图片时调用的方法，这些方法的实现与前面的分类方法类似。
   （3）UIView (WebCacheOperation) 以字典的形式存储与当前UIView相关的key和SDWebImageOperation，用来添加、移除、取消图片的key对应的operation。
   （4）NSData (ImageContentType) 根据image的NSData判断图片的类型
   （5）UIImage (GIF) 提供gif图片处理，以及图片缩放和裁剪的处理方法
   （6）UIImage (MultiFormat)  将通过NSData的分类方法得到的图片类型，进行不同处理
-  （7） UIButton (WebCache)  该分类与UIImageView (WebCache)分类的实现是类似的。
-</code></pre>
-
-<p>  2、下面分析要实现上面分类方法中图片的缓存和异步下载功能要用到的几个核心类，及其功能</p>
-
-<pre><code>   SDWebImageManager：首先判断从内存缓存和硬盘缓存中查找url对应的图片是否存在，如果都不存在从网络异步下载图片，如果存在使用block进行回调。同时，如果是从网络下载图片，会对这个图片在内存和硬盘进行缓存，如果从硬盘缓存获取也会保存到内存。
-
+  （7） UIButton (WebCache)  该分类与UIImageView (WebCache)分类的实现是类似的。   2、下面分析要实现上面分类方法中图片的缓存和异步下载功能要用到的几个核心类，及其功能
+  
+   SDWebImageManager：首先判断从内存缓存和硬盘缓存中查找url对应的图片是否存在，如果都不存在从网络异步下载图片，如果存在使用block进行回调。同时，如果是从网络下载图片，会对这个图片在内存和硬盘进行缓存，如果从硬盘缓存获取也会保存到内存。
+   
    SDImageCache：具体实现前面SDWebImageManager中从内存缓存和硬盘缓存查找图片，以及保存缓存图片等功能，使用了NSCache以key－value的形式实现缓存功能，以图片的url作为缓存的key，当内存不足时会清除缓存图片。相对于字典缓存，它有下面几个优势
-
+   
   SDWebImageDownloader：提供异步下载图片功能，当缓存中不存在的情况下，并且使用了imageIO来实现图片的渐进加载。
-
+  
   SDWebImageDownloaderOperation：封装异步下载网络请求的相关功能。
-
+  
   SDWebImageDecoder：异步对NSData类型的数据进行解压操作，为了避免UIImage的imageWithData函数在画图的时候对Data进行解压消耗内存，提前进行解压操作，以消耗存储空间提高执行时间和效率。
-
+  
   SDWebImagePrefetcherDelegate 以预先下载图片，方便后续使用，具体差别还需要仔细看一下源码
 </code></pre>
 
@@ -127,21 +124,18 @@
 <pre><code>1、使用分类为类扩展更多的功能，让使用者使用图片异步加载就好像直接为UIImageView设置image一样，通过一个图片设置方法就封装了很多功能
 2、面向对象编程和面向协议编程的有效结合
 3、使用了以空间换时间的一些性能优化策略
-4、使用imageIO结合URLConnnection，实现相应代理，每次接收到数据时更新图片
-</code></pre>
+4、使用imageIO结合URLConnnection，实现相应代理，每次接收到数据时更新图片 四、SDWebImage的使用和扩展
 
-<p>四、SDWebImage的使用和扩展</p>
-
-<pre><code>   如果我们要在下载图片的过程中实现一些其他自定义的功能，可以通过覆写他提供的一些方法来实现
+   如果我们要在下载图片的过程中实现一些其他自定义的功能，可以通过覆写他提供的一些方法来实现
    pod search SDWebImage 搜索到现在版本为：pod 'SDWebImage', '~&gt; 3.7.3'
    关于图片更深入的学习，可参考：http://blog.cnbang.net/tech/2578/
-
+ 
    学习完上面这篇文章后对里面一些知识点还有些不理解，需要自己去求证。
    如：内核缓冲区（高速／低速缓存） 与 用户空间（内存）区别，
    虚拟内存（从硬盘上开辟的一块空间） 和 内存的区别。
    字节对齐（以c语言中的结构体为例，结构体中元素类型可能有多种，如int  float，我们应该以所占位数最大的float类型为标准，给int元素也分配这么大的空间，这样保证struct的所以类型大小都是一样大，并且是对齐的。这样在一片连续空间中查找结构体的各个元素时，只需要按固定大小查找即可，如果不对齐，就需要一个一个判断大小之后再取）。
     那上面讲的位图图像数据会出现多种不对齐的数据吗
-
+    
 
 
  FastImageCache引伸阅读

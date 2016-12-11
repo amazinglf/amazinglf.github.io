@@ -84,18 +84,18 @@
   </header>
 
 
-<div class="entry-content"><h3>1、AutoLayout的基本概念</h3>
+<div class="entry-content"><h3 id="autolayout">1、AutoLayout的基本概念</h3>
 
 <pre><code> （1）定义
   When calculating the runtime positions of elements in a user interface, the Auto Layout system considers all constraints at the same time, and sets positions in such a way that best satisfies all of the constraints.
  当计算用户界面上元素位置的时候，Auto Layout会考虑会同时考虑所有的约束，通过最好的满足所有的约束来设置它的位置。
-
+ 
  （2）表示方法
    通过创建多个元素之间关系的数学表达式进行表示
    y = m*x + b
    y and x are attributes of views. 如：left top width等
    m and b are floating point values.  常量值 关系 ＝ &gt;= &lt;=
-
+   
    优先级 NSLayoutPriority，高priority的constraint在冲突时会覆盖低constraint的效果
    1、constraint是累加的，设定同类型的constraint不会替换原有的constraint，如果想替换需要自己删除原有的constraint。
    2、对于某些控件，constraint可以跨层级添加，button.left = buton.superview.superview.left + 10 。但是对于其subviews是通过设置frame值手动设置，以及类似scroll view（have a bounds transform）的控件，有一个内部世界和一个外部世界，内部控件无法通过约束与外部世界进行连接。
@@ -106,45 +106,44 @@
    setContentCompressionResistancePriority:forAxis:设定抗压能力，一般抗压能力默认值较高在750.
 </code></pre>
 
-<h3>2、AutoLayout的布局过程</h3>
-
+<h3 id="autolayout-1">2、AutoLayout的布局过程</h3>
 <pre><code>   理解布局过程是正确使用autolayout的关键，布局过程主要分为以下三个部分：更新约束 (updating constraints)－－－－布局视图 (laying out views)－－－－显示视图
-
+   
    第一部分：更新约束：自下而上（从子视图到父视图）发生的，通过子视图来撑开父视图，并且系统会在此过程中自动计算视图的 frame 。对于自定义视图，一般重写
    updateConstraints方法（一定要注意最后调用super 的这个方法），可以通过调用 setNeedsUpdateConstraints 来触发这个操作。并且最好通过实现 requiresConstraintBasedLayout 返回 YES 明确这个依赖。且可以返回intrinsicContentSize这个属性的大小。
     在使用第三方库masonry进行约束布局时，可以通过mas_makeConstraint   mas_updateConstraints（更新前面的约束，不会删除之前的约束）    mas_remakeConstraint（重新添加约束，删除之前这个view且仅仅这个view上的所有约束） 的使用，对布局进行灵活处理。注意在使用后面两种方法后，都要对当前这个view调用updateConstraints／setNeedsUpdateConstriants。使更新的约束生效。
-
+    
      第二部分：布局视图：是与前面相反的过程，即自上而下（从父视图到子视图）的过程，即将前面约束值设置得到的frame值应用到视图上，在自定义view中，可以重写layoutSubviews来获得对布局变化的所有权，即在该方法中，可以更改它的布局过程，通过调用 setNeedsLayout 来触发一个操作请求，这并不会立刻应用布局，而是在稍后再进行处理。因为所有的布局请求将会被合并到一个布局操作中去，所以你不需要为经常调用这个方法而担心。
      可以调用 layoutIfNeeded / layoutSubtreeIfNeeded（分别针对 iOS / OS X）来强制系统立即更新视图树的布局。如果你下一步操作依赖于更新后视图的 frame，这将非常有用.
-
+     
     第三部分：显示视图：自上而下将渲染后的视图传递到屏幕上，重写drawRect:可以获得自定义视图显示过程的所有权。通过调用 setNeedsDisplay 可以触发，这将会导致所有的调用都被合并到一起推迟重绘。
-
+    
     规律：由于每一步都是依赖前一步操作的，如果有任何布局的变化还没实行的话，显示操作将会触发一个布局行为。类似地，如果约束条件系统中存在没有实行的改变，布局变化也将会触发更新约束条件。因此，这三步并不是单向的。基于约束条件的布局是一个迭代的过程，布局操作可以基于之前的布局方案来对约束做出更改，而这将再次触发约束的更新，并紧接另一个布局操作。这可以被用来创建高级的自定义视图布局，但是如果你每一次调用的自定义 layoutSubviews 都会导致另一个布局操作的话，你将会陷入到无限循环的麻烦中去。
-
+    
     使用：在viewcontroller中，可以重写下面的方法，获得布局后的控件的frame等属性，并且还可以在这里对这些属性进行修改和更新   
     - (void)viewWillLayoutSubviews
     - (void)viewDidLayoutSubviews
-
+    
     调试：
     当你在不可满足的约束条件错误信息中看到 NSLayoutResizingMaskConstraints 时，你肯定忘了为你某一个视图设定 translatesAutoResizingMaskIntoConstraints 为 NO
 </code></pre>
 
-<h3>springs和strutsc方法存在的布局问题</h3>
+<h3 id="springsstrutsc">springs和strutsc方法存在的布局问题</h3>
 
 <pre><code>   (1) 让视图贴附左上边缘（或者右下边缘）,并且当父视图大小改变时，重新调整自身水平和垂直方向的大小。但又没告诉子视图该调整多少（即保证视图之间的间隔是多少）（默认的处理就是按初始的固定大小排列，如果与其他视图出现冲突，就缩小自己的宽和高）这样带来的问题是如果切换横竖屏会出现一些问题。
     在当父视图改变大小时，autosizing masks告诉子视图调整大小,改变灵活宽度和高度设置（springs在旋转用户界面之前、之间、之后，UIKit会发送一些消息到你的视图控制器，你可以截获这些消息，从而对你UI做出改变。代表性的像viewWillLayoutSubviews，你会重写这个方法从而改变任何需要重新排列的视图的frame。
-
+    
    (2) 根据上面的分析可以重写viewWillLayoutSubviews。判断屏幕方法来设置视图的不同固定宽度和高度，注意将autosizing对应图中的宽高约束去掉，此时横竖屏切换可以了，但是在不同尺寸的模拟器上运行又会出现一些问题。所以最后autolayout自动布局应运而生啦
-
+   
  http://www.cocoachina.com/industry/20131203/7462.html   
-
+ 
  约束是一个真实的对象（NSLayoutConstraint），并且他们也有属性,自动布局最基本的工具是约束
 </code></pre>
 
-<p>  参考文档</p>
+<p>参考文档</p>
 
-<p><a href="http://www.cocoachina.com/industry/20131012/7148.html">http://www.cocoachina.com/industry/20131012/7148.html</a>
-<a href="http://objccn.io/issue-3-5/">http://objccn.io/issue-3-5/</a></p>
+<p>http://www.cocoachina.com/industry/20131012/7148.html
+http://objccn.io/issue-3-5/</p>
 </div>
 
 
