@@ -9,7 +9,7 @@
   <meta name="author" content="Your Name">
 
   
-  <meta name="description" content="1、概述 NSURL Loading System主要用来描述使用标准internet协议与server端交互，以及与URLs进行交互的基础框架类。它是一组类和协议的集合，允许你的app去获取URL指定的内容，核心类即NSURL，通过它使我们的app可以操作URLs以及URLs指向的资源。 &hellip;">
+  <meta name="description" content="1、RunLoop与线程关系 OC CoreFoundation 备注 获取主线称RunLoop [NSRunLoop mainRunLoop] CFRunLoopGetMain() 主线程的RunLoop是系统默认创建好的 获取非主线程runloop [NSRunLoop &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -65,6 +65,190 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2016/05/07/nsurl-loading-system%E5%89%AF%E6%9C%AC/">Runloop学习调研</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-05-07T15:45:29+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>7</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>3:45 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h3>1、RunLoop与线程关系</h3>
+
+<table>
+<thead>
+<tr>
+<th>           </th>
+<th style="text-align:center;"> OC           </th>
+<th style="text-align:right;"> CoreFoundation  </th>
+<th>  备注  </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td> 获取主线称RunLoop   </td>
+<td style="text-align:center;"> [NSRunLoop mainRunLoop]       </td>
+<td style="text-align:right;"> CFRunLoopGetMain() </td>
+<td>   主线程的RunLoop是系统默认创建好的 </td>
+</tr>
+<tr>
+<td> 获取非主线程runloop      </td>
+<td style="text-align:center;"> [NSRunLoop currentRunLoop]      </td>
+<td style="text-align:right;"> CFRunLoopGetCurrent()   </td>
+<td>  非主线程runloop需要在用户主动获取时才会创建 </td>
+</tr>
+</tbody>
+</table>
+
+
+<p> 注意：CoreFoundation中方法是线程不安全的，而OC中方法是线程安全的，且OC方法是对CoreFoundation中方法的封装。<br/>
+ 原理：从上面的表格可以看出，线程和RunLoop是息息相关的，即线程和RunLoop是一一对应的关系，从获取RunLoop的   源码(<a href="https://opensource.apple.com/source/CF/CF-1151.16/CFRunLoop.c.auto.html">https://opensource.apple.com/source/CF/CF-1151.16/CFRunLoop.c.auto.html</a>)可以看出，它是通过一个字典来实现线程和RunLoop之前一一对应关系的，<br/>
+ <img src="../images/runloop1.png" alt="Alt text" /></p>
+
+<h4>启动RunLoop</h4>
+
+<p>   主线程的RunLoop是默认启动运行的，非主线程的RunLoop在获取后，需要调用RunLoop的相关run方法或者直接往runloop中添加输入源、定时器、观察者等来启动。</p>
+
+<pre><code>    //相关的run方法
+    - (void)run;
+    - (void)runUntilDate:(NSDate *)limitDate;
+    - (BOOL)runMode:(NSRunLoopMode)mode beforeDate:(NSDate *)limitDate;
+    //给runloop添加定时器、输入源的方法
+    - (void)addTimer:(NSTimer *)timer forMode:(NSRunLoopMode)mode;
+    - (void)addPort:(NSPort *)aPort forMode:(NSRunLoopMode)mode;
+    //给runloop添加observer
+        NSRunLoop* myRunLoop = [NSRunLoop currentRunLoop];
+        CFRunLoopObserverContext  context = {0, self, NULL, NULL, NULL};
+        CFRunLoopObserverRef    observer = CFRunLoopObserverCreate(kCFAllocatorDefault,
+                kCFRunLoopAllActivities, YES, 0, &amp;myRunLoopObserver, &amp;context);
+        if (observer)
+        {
+            CFRunLoopRef    cfLoop = [myRunLoop getCFRunLoop];
+            CFRunLoopAddObserver(cfLoop, observer, kCFRunLoopDefaultMode);
+        }
+    //观察者的回调方法
+    void MyRunLoopObserver(CFRunLoopObserverRef observer,
+                           CFRunLoopActivity activity,
+                           void* info)
+    {
+        NSLog(@"INFO");
+        switch (activity) {
+            case kCFRunLoopEntry: {
+                NSLog(@"即将进入Loop");
+                break;
+            }
+            case kCFRunLoopBeforeTimers: {
+                NSLog(@"即将处理Timmer");
+                break;
+            }
+            case kCFRunLoopBeforeSources: {
+                NSLog(@"即将处理Source");
+                break;
+            }
+            case kCFRunLoopBeforeWaiting: {
+                NSLog(@"即将进入休眠");
+                break;
+            }
+            case kCFRunLoopAfterWaiting: {
+                NSLog(@"刚从休眠中唤醒");
+                break;
+            }
+            case kCFRunLoopExit: {
+                NSLog(@"即将退出Loop");
+                break;
+            }
+            case kCFRunLoopAllActivities: {
+                NSLog(@"所有的状态");
+                break;
+            }
+        }
+    }
+</code></pre>
+
+<p> 直接通过run方法启动RunLoop时需要注意，在适当的时机给RunLoop添加事件源（source／timer／port）来触发RunLoop一直运行，保证其不会随着线程退出而退出。这个适当的时机是指在当前非主线程还没有退出之前，给RunLoop添加了事件源（source／timer／por／performselecter方法等t）即可，添加事件源与调用run方法之间没有顺序的限制。只要保证是在当前这个非主线程执行过程中。同时在非线程执行perfomrslector，必须保证其它线程有一个活跃的runloop也是同样的道理 <br/>
+ 不通过run相关方法，直接创建定时器和输入源，也需要通过上面列出的方法添加到当前runlooop上<br/>
+  通过下面的demo，在三种方式之间切换，可以验证上面的结论</p>
+
+<pre><code>@interface StartRunloopVC ()
+@property (nonatomic, strong) NSThread *thread;
+@end
+@implementation StartRunloopVC
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.view.backgroundColor = [UIColor lightGrayColor];
+    self.thread = [[NSThread alloc] initWithTarget:self selector:@selector(createRunloop) object:nil];
+    [self.thread setName:@"liangfang-thread"];
+    [self.thread start];
+    //方式二，在run之后，保证runloop不会退出
+//    [self performSelector:@selector(performsel) onThread:self.thread withObject:nil waitUntilDone:NO];
+}
+- (void)createRunloop
+{
+    NSRunLoop *runloop = [NSRunLoop currentRunLoop];
+    //方式一，在run之前，保证runloop不会退出
+//    [runloop addPort:[NSMachPort port] forMode:NSRunLoopCommonModes];
+    [runloop run];
+    NSLog(@"如果当前线程的runloop没有退出，则此处一直不会执行");
+}
+- (void)performsel
+{
+    NSLog(@"perform方法");
+}
+
+- (void)touchesBegan:(NSSet&lt;UITouch *&gt; *)touches withEvent:(UIEvent *)event
+{
+    NSLog(@"进入系统的下一次循环");
+    //方式三，下面是一个反例，下面的performsel方法永远不会执行，因为self.thread对应的runloop即线程已经退出了
+    [self performSelector:@selector(performsel) onThread:self.thread withObject:nil waitUntilDone:NO];
+}
+</code></pre>
+
+<p>原理：内部源码实现实际是通过do while() 循环来实现的</p>
+
+<h4>退出RunLoop</h4>
+
+<p>主线程的RunLoop是一直不会退出的，除非应用结束，非主线程RunLoop的退出有两种方式<br/>
+（1）通过给RunLoop配置一个超时值，设置超时值的方式如下，此时就不能使用run了<br/>
+- (void)runUntilDate:(NSDate <em>)limitDate;<br/>
+- (BOOL)runMode:(NSRunLoopMode)mode beforeDate:(NSDate </em>)limitDate;</p>
+
+<pre><code>//在非主线程执行下面方法，doFireTimer方法执行10此之后，当前线程就退出了
+[NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(doFireTimer) userInfo:nil repeats:YES];
+[runloop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:1]];
+</code></pre>
+
+<p> （2）通过调用 CFRunLoopStop 方法来退出，但是自己通过demo试了当前非主线程还是存在，好奇怪，官方文档说可以<br/>
+  <img src="../images/runloop2.png" alt="Alt text" /></p>
+
+<h3>RunLoop的不同模式及模式切换</h3>
+
+<p>一个 RunLoop 包含若干个 Mode，每个 Mode 又包含若干个 Source/Timer/Observer，如下图示：<a href="http://cc.cocimg.com/api/uploads/20150528/1432798883604537.png">http://cc.cocimg.com/api/uploads/20150528/1432798883604537.png</a></p>
+
+<p>系统默认注册了5个Mode，其中NSDefaultRunLoopMode（kCFRunLoopDefaultMode）、NSEventTrackingRunLoopMode、NSRunLoopCommonModes（kCFRunLoopCommonModes）是比较常用的，其它的Mode一般是系统在使用。</p>
+
+<p>DefaultRunLoop：默认的mode，主线程相关的事件响应等都在defaultmode下<br/>
+EventTrackingRunLoop：滑动界面，如scrollview的滑动监听在此mode下<br/>
+CommonMode：默认包含了所有的mode，譬如想让定时器在界面滑动的时候也生效，可以将定时器添加到commommode下，而不是defaultmode</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1780,194 +1964,6 @@ Method originMethod = class_getInstanceMethod([NSString class], @selector(lowerc
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/08/15/iossheng-ming-zhou-qi-xiang-guan-zhi-shi-zong-jie/">iOS生命周期相关知识总结</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-08-15T13:18:11+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>15</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>1:18 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>1、 iOS工程中的各文件和目录的作用</p>
-
-<pre><code>Tests文件用于单元测试（commad＋u 执行单侧命令)
-Supporting files文件夹下Info.plist的文件，该文件对工程做一些运行期的配置，非常重要，不能删除
-Localiztion native development region(CFBundleDevelopmentRegion)-本地化相关
-Bundle display name(CFBundleDisplayName)-程序安装后显示  的名称,限制在10－12个字符，如果超出，将被显示缩写名称
-Icon file(CFBundleIconFile)-app图标名称,一般为Icon.png
-Bundle version(CFBundleVersion)-应用程序的版本号，每次往          
-App Store上发布一个新版本时，需要增加这个版本号
-Main storyboard file base name(NSMainStoryboardFile)-主storyboard文件的名称
-Bundle identifier(CFBundleIdentifier)-项目的唯一标识，部署到真机时用到
-.pch文件，是一个头文件(Xcode6没有找到)pch头文件的内容能被项目中的其他所有源文件共享和访问一般在pch文件中定义一些全局的宏
-</code></pre>
-
-<p>2、app的生命周期</p>
-
-<p>  （1）执行main.m文件的main函数，实现下面两个操作</p>
-
-<pre><code>  创建UIApplication对象
-  创建UIApplication的delegate对象
-  main函数中执行了一个UIApplicationMain这个函数：
- int UIApplicationMain(int argc, char *argv[], NSString *principalClassName, NSString *delegateClassName); 各个参数含义如下：
-  argc、argv：直接传递给UIApplicationMain进行相关处理即可
-  principalClassName：指定应用程序类名（app的象征），该类必须是UIApplication(或子类)。如果为nil,则用UIApplication类作为默认值
- delegateClassName：指定应用程序的代理类，该类必须遵守  UIApplicationDelegate协议，UIApplicationMain函数会根据principalClassName创建UIApplication对象，根据delegateClassName创建一个delegate对象，并将该delegate对象赋值给UIApplication对象中的delegate属性。
-
- 以创建的sigle view applicaiton为例，相应方法实现为：return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));
- （2）接着会建立应用程序的Main Runloop（事件循环）  
- 如果有storyboard，根据Info.plist获得最主要storyboard的文件名,加载最主要的storyboard
- 创建UIWindow
- 创建和设置UIWindow的rootViewController（即storyboard属性面板的class属性定义的视图控制器）显示窗口
-（再去执行delegate的相关方法）
-如果没有storyboard，delegate对象开始处理(监听)系统事件程序启动完毕的时候, 就会调用代理的application:didFinishLaunchingWithOptions:方法在application:didFinishLaunchingWithOptions:中创建UIWindow创建和设置UIWindow的rootViewController显示窗口
-</code></pre>
-
-<p>   有一点不明白的地方就是，如果有storyboard的时候，是显示窗口之后，再去调用appdelegete代理的方法，还是先调用appdelegete代理的方法，再显示storyboard的窗口（解决办法，在代   理的application:didFinishLaunchingWithOptions:方法中创建uiwindow或对它重新赋值，看是否会覆盖storyboard）结论是先从storyboard加载，再执行代理方法。</p>
-
-<p>   （3）UIWindow</p>
-
-<p> UIWindow是一种特殊的UIView，通常在一个app中只会有一个UIWindow
-iOS程序启动完毕后，创建的第一个视图控件就是UIWindow，接着创建控制器的view，最后将控制器的view添加到UIWindow上，于是控制器的view就显示在屏幕上了</p>
-
-<pre><code>一个iOS程序之所以能显示到屏幕上，完全是因为它有UIWindow,也就说，`没有UIWindow，就看不见任何UI界面
-  /**
- *  程序启动完毕就会调用一次
- */
-  - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
-{
-// 1.创建window
-self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-// 2.设置window的背景色
-self.window.backgroundColor = [UIColor whiteColor];    
-MjOneViewController *one = [[MjOneViewController alloc] init];
-// 方法一 :加入到UIWindow  [self.window addSubview:one.view];
-//方法二 推荐
-self.window.rootViewController = one;
-// 3.显示window
-[self.window makeKeyAndVisible];
-return YES;
-}
-
- 最后，程序正常退出时UIApplicationMain函数才返回。
-</code></pre>
-
-<p>   3、对象的生命周期</p>
-
-<pre><code>任何对象都是继承自NSObject的，可以通过重写下列方法，设置对象的初始化。
-+ (void)load;
-+ (void)initialize;
-- (instancetype)init
-</code></pre>
-
-<p>   4、视图控制器的生命周期</p>
-
-<pre><code> loadView     从nib载入视图 ，通常这一步不需要去干涉。
- loadView 此方法在控制器的view为nil的时候被调用。 此方法用于以编程的方式创建view的时候用到。 如：
-- ( void ) loadView {
-UIView *view = [ [ UIView alloc] initWithFrame:[ UIScreen mainScreen] .applicationFrame] ;
-[ view setBackgroundColor:_color] ;
-self.view = view;  }
-
- viewDidLoad方法：此方法为控制器已被实例化，在视图被加载到内存中的时候调用该方法，这个时候视图并未出现。在该方法中通常进行的是对所控制的视图进行初始化处理。
-  viewDidLoad方法在应用运行的时候只调用一次，而其他4个方法viewWillAppear   viewDidAppear   viewWillDisapper    viewDidDisapper可以被反复调用多次，它们的使用很广泛但同时也具有很强的技巧性。
- iOS系统在低内存时情况下会调用didReceiveMemoryWarning:该方法的主要职能是释放内存，包括视图控制器中的一些成员变量和视图的释放
-
-  ViewController的生命周期中各方法执行流程如下：
-  init—&gt;loadView—&gt;viewDidLoad—&gt;viewWillApper—&gt;viewDidApper—&gt;viewWillDisapper—&gt;viewDidDisapper—&gt;viewWillUnload-&gt;viewDidUnload—&gt;dealloc
-
- 修改应用初始启动时关联的storyboard文件，通过代码创建初始启动的视图控制器
- - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-// Override point for customization after application launch.
-//重新设置self.window
-self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] applicationFrame]];
-ViewController *vc = [[ViewController alloc] init];
-UINavigationController *nvc = [[UINavigationController alloc] initWithRootViewController:vc];
-self.window.backgroundColor = [UIColor whiteColor];
-//设置window上加载的视图控制器
-self.window.rootViewController = nvc;
-//使改动生效
-[self.window makeKeyAndVisible];
-NSLog(@"%s",__FUNCTION__);
-return YES;
-}
-</code></pre>
-
-<p>   通过创建storyboard加载视图控制器的方法：
-创建一个storyboard，New File &ndash;> IOS &ndash;> User Interface &ndash;> Storyboard
-设置storyboard右侧的class属性为相应视图控制器类
-在代码中创建storyboard的同时，启动相应的视图控制器
-UIStoryboard *two = [UIStoryboard storyboardWithName:@&ldquo;Main&rdquo; bundle:nil];
-[self.navigationController pushViewController:[two instantiateInitialViewController] animated:YES];
-创建视图控制器时勾选创建xib，自动生成对应xib文件
-New File &ndash;> IOS &ndash;> Source &ndash;> Cocoa Touch Class(勾选Also create Xib File)</p>
-
-<p>   通过手动创建带xib的视图控制器
-创建一个xib文件，New File &ndash;> IOS &ndash;> User Interface &ndash;> view
-FiveViewController *fiveVC = [[FiveViewController alloc]initWithNibName:@&ldquo;other&rdquo; bundle:nil];
-    [self.navigationController pushViewController:fiveVC animated:YES];</p>
-
-<p>5、 视图控制器装载和卸载视图的过程</p>
-
-<p>   ViewController的职责主要包括管理内部各个view的加载显示和卸载，同时负责与其他ViewController的通信和协调
-        ViewController可以分为两类：
-        一类是显示内容的，比如UIViewController、UITableViewController等，同时还可以自定义继承自UIViewController的ViewController；另一类是ViewController容器，UINavigationViewController和UITabBarController等
-         在控制器view加载过程中首先会调用loadView方法，在这个方法中主要完成一些关键view的初始化工作，比如UINavigationViewController和UITabBarController等容器类的ViewController；接下来就是加载view，加载成功后，会接着调用viewDidLoad方法，这里要记住的一点是，在loadView之前，是没有view的，也就是说，在这之前，view还没有被初始化。完成viewDidLoad方法后，ViewController里面就成功的加载view了，如下图右下角所示。
-在Controller中创建view有两种方式，一种是通过代码创建、一种是通过Storyboard或Interface Builder来创建，后者可以比较直观的配置view的外观和属性
- 关于loadView方法的重写，官方文档中有一个明显的注释，当通过代码方式去创建你自己的view时，在loadView方法中不应该调用super，如果调用[super loadView]会影响CPU性能。
-  - (void)loadView<br/>
-{<br/>
-     CGRect applicationFrame = [[UIScreen mainScreen] applicationFrame];<br/>
-     UIView *contentView = [[UIView alloc] initWithFrame:applicationFrame];<br/>
-     contentView.backgroundColor = [UIColor blackColor];<br/>
-     self.view = contentView; <br/>
-}
-view加载过程.png
-       当系统发出内存警告时，会调用didReceiveMemoeryWarning方法，如果当前有能被释放的view，系统会调用viewWillUnload方法来释放view，完成后调用viewDidUnload方法，至此，view就被卸载了。此时原本指向view的变量要被置为nil，具体操作是在viewDidUnload方法中调用self.myButton = nil。
-ViewController中view卸载过程.png
-        loadView和viewDidLoad的区别就是，loadView时view还没有生成，viewDidLoad时，view已经生成了，loadView只会被调用一次，而viewDidLoad可能会被调用多次（View可能会被多次加载），当view被添加到其他view中之前，会调用viewWillAppear，之后会调用viewDidAppear。当view从其他view中移除之前，调用viewWillDisAppear，移除之后会调用viewDidDisappear。当view不再使用时，受到内存警告时，ViewController会将view释放并将其指向为nil。</p>
-
-<p>6、视图UIView的生命周期</p>
-
-<p>  常用方法如下：
-- (void)removeFromSuperview;
-- (void)insertSubview:(UIView *)view atIndex:(NSInteger)index;
-- (void)exchangeSubviewAtIndex:(NSInteger)index1 withSubviewAtIndex:(NSInteger)index2;</p>
-
-<ul>
-<li>(void)addSubview:(UIView *)view;</li>
-<li>(void)insertSubview:(UIView <em>)view belowSubview:(UIView </em>)siblingSubview;</li>
-<li><p>(void)insertSubview:(UIView <em>)view aboveSubview:(UIView </em>)siblingSubview;</p></li>
-<li><p>(void)bringSubviewToFront:(UIView *)view;</p></li>
-<li><p>(void)sendSubviewToBack:(UIView *)view;</p></li>
-<li><p>(void)didAddSubview:(UIView *)subview;</p></li>
-<li><p>(void)willRemoveSubview:(UIView *)subview;</p></li>
-<li><p>(void)willMoveToSuperview:(nullable UIView *)newSuperview;</p></li>
-<li>(void)didMoveToSuperview;</li>
-<li>(void)willMoveToWindow:(nullable UIWindow *)newWindow;</li>
-<li>(void)didMoveToWindow;</li>
-</ul>
-
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/2">&larr; Older</a>
@@ -1983,6 +1979,10 @@ ViewController中view卸载过程.png
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2016/05/07/nsurl-loading-system%E5%89%AF%E6%9C%AC/">Runloop学习调研</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2016/05/07/nsurl-loading-system/">NSURL Loading System</a>
       </li>
     
@@ -1996,10 +1996,6 @@ ViewController中view卸载过程.png
     
       <li class="post">
         <a href="/blog/2015/12/02/sdwebimageyuan-ma-xue-xi/">SDWebImage源码学习</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/11/27/cocoapodsshi-jian/">CocoaPods实践</a>
       </li>
     
   </ul>
